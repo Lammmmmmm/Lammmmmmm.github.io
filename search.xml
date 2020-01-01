@@ -1,6 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>SGI STL 源码学习(一)：traits 技巧与 type_traits 模板</title>
+    <url>/2020/01/01/STL1-TraitsAndType-traitsTemplate/</url>
+    <content><![CDATA[<p>本篇文章是 SGI STL 源码学习的系列文章之一，主要是为了对学习侯捷先生的《STL 源码剖析》做一个总结回顾，并记录一些思考，同时为了练习我也手动实现了一个简易版的 STL 库，相关代码会陆续上传到<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">我的github</a>。</p>
+<h2 id="1-traits-编程技法"><a href="#1-traits-编程技法" class="headerlink" title="1 traits 编程技法"></a>1 traits 编程技法</h2><p>traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。</p>
+<ul>
+<li>作用：通过函数模板来对具体对象或变量进行推导以<strong>获取其类型</strong>或<strong>某种特性</strong>。</li>
+<li>目的1：针对获得的类型和某种特性来对<strong>实现函数进行优化以达到更高的性能</strong>。</li>
+<li>目的2：通过提取出的类型<strong>作为模板函数的返回类型</strong>，方便函数实现。</li>
+</ul>
+<p>关于目的1，这里可以举一个迭代器的例子。例如 STL 中的迭代器型别有五种类型</p>
+<div class="note info"><ul><li>Input iterator，能读不能写，只支持自增运算。也就是只能用<code>iter++</code>或<code>++iter</code>来一步步前进而不能后退。</li><li>Output iterator ，能写不能读，只支持自增运算</li><li>Forward iterator ，能读能写，只支持自增运算</li><li>Bidirectional iterator ，能读能写，支持自增和自减运算。可以<code>iter++</code>、<code>++iter</code>，也可以<code>iter--</code>、<code>--iter</code>，但依然每次只能前进后退一步。</li><li>Random access iterator ，能读能写，能自增自减还能进行运算，如可以用<code>iter+=5</code>，<code>iter-=5</code>来前进或后退5步。</li></ul></div>
+
+<p>比如我有个迭代器<code>iter</code>，现在有个操作要求<code>iter</code>前进<code>n</code>步来读写数据。</p>
+<p>因为事先不知道迭代器的类型，我只能保守地猜测其只能自增自减，这样<span class="label danger">复杂度就是`O(n)`</span>，但如果我运用<code>traits</code>技巧使用模板<code>iterator_traits&lt;iter&gt;::category</code>（后续会介绍，现在只需要知道其可以获得迭代器类型即可）来获得迭代器类型知道了其是<code>Randon access iterator</code>，那么直接<code>iter += n</code>即可，<span class="label danger">此时复杂度就是`O(1)`</span>。</p>
+<p>如果对迭代器类型不太熟悉还不太懂那也没关系，后续文章还会详细介绍，先接着往下看。</p>
+<p>对于目的2，这里也简单说一下。因为在C++11之前并没有<code>decltype</code>关键字，所以在编写模板函数的时候，函数返回类型是不能通过模板参数推导的，这时就可以使用<code>traits</code>技巧来获得类型作为模板函数的返回类型。</p>
+<p>比如现在有个模板函数需要接受一个函数迭代器，然后返回其指向的值，那么模板参数是迭代器，函数的返回类型却是其指向值的类型。显然没办法通过模板参数推导来得到迭代器的指向值类型，这时就可以对迭代器使用<code>traits</code>技巧来提取其指向值类型作为函数的返回类型。</p>
+<h2 id="2-POD类型"><a href="#2-POD类型" class="headerlink" title="2 POD类型"></a>2 POD类型</h2><p>要说<code>type_traits</code>模板就必须先说<code>POD</code>类型。</p>
+<p>POD 是 Plain Old Data 的缩写，是 C++ 定义的一类数据结构概念，比如 <code>int</code>、<code>float</code> 等都是 POD 类型的。Plain 代表它是一个普通类型，Old 代表它是旧的，与 C 语言兼容，那么就可以使用 <code>memcpy()</code> 这种最原始的函数进行操作。两个系统进行交换数据，如果没有办法对数据进行语义检查和解释，那就只能以非常底层的数据形式进行交互，而拥有 POD 特征的类或者结构体通过二进制拷贝后依然能保持数据结构不变。</p>
+<p><strong>也就是说，能用 C 的 memcpy() 等函数进行操作的类型就是 POD 类型的数据</strong>。 </p>
+<p>在C++的各标准中对POD类型的有详细定义，从使用中可以概括为<strong>标量类型</strong>和<strong>POD类</strong>。</p>
+<ul>
+<li>标量类型：整型(<code>char</code>、<code>int</code>等等)，浮点型(<code>double</code>、<code>float</code>等等)，枚举类型，指针类型，指向成员指针类型，<code>std::nullptr_t</code>类型。</li>
+<li>POD类：包括满足 trivial 条件和 standard-layout 条件的<code>struct</code>、<code>class</code>、<code>union</code>。<ul>
+<li><strong>只有默认</strong>的构造/析构函数、拷贝/移动函数、拷贝/移动运算符。</li>
+<li>不能有<strong>虚函数</strong>和<strong>虚基类</strong>。</li>
+<li><strong>普通成员有相同的访问级别</strong>，如类成员都为<code>public</code>或都为<code>private</code>或都为<code>protected</code>。</li>
+<li>第一个成员为自身的数据成员，而不能是由父类定义的数据。</li>
+<li>只要有父类，<strong>普通成员只能在其中一个类中</strong>，不可分散。</li>
+</ul>
+</li>
+</ul>
+<p>可以使用<code>std::is_pod&lt;classname&gt;::value</code>的值来判断一个类是否为POD类型。</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="comment">//满足POD类型条件</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A1</span>&#123;</span></span><br><span class="line">    <span class="keyword">int</span> a;</span><br><span class="line">    <span class="keyword">double</span> b;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// A2继承了A1但父类子类同时有成员且A2的第一个成员为A1类型，故而不是pod类型</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A2</span>:</span><span class="keyword">public</span> A1&#123;</span><br><span class="line">    A1 num1;</span><br><span class="line">    <span class="keyword">double</span> num2;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    A1 a1;</span><br><span class="line">    A2 a2;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::is_pod&lt;A1&gt;::value &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::is_pod&lt;A2&gt;::value &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么知道了一个对象或变量是不是POD类型有什么用呢？答案是以此<strong>提高程序运行效率</strong>。</p>
+<p>假如事先知道了某函数的操作对象是POD类型，那么我们就可以针对其特性，使用底层的<code>memcpy()</code>、<code>memove()</code>等C函数对其操作，而不需要调用类似<code>constructor</code>，<code>destructor</code>等函数。这在大规模而操作频繁的程序中有显著的效率提升。</p>
+<h2 id="3-type-traits-模板"><a href="#3-type-traits-模板" class="headerlink" title="3 type_traits 模板"></a>3 type_traits 模板</h2><p><code>type_traits</code>在SGT STL 2.91版本中命名为<code>__type_traits</code>，因为当时并未加入STL标准，属于SGI的“私房菜”，故而命名前有两个下划线，这里为了方便描述就去掉了开头的下划线。</p>
+<p>从前文已经得知<code>traits</code>编程技巧的作用是为了<strong>取得对象或变量的某种特性</strong>，而目的则是为了根据<strong>特性作出相应优化而提升效率</strong>。而这里的<code>type_traits</code>模板所能取得特性就是是否具有所谓“平凡”（<code>trivial</code>）的默认构造函数、拷贝构造函数、赋值运算符、析构函数，以及是否是POD类型。如果具有上述的性质，那么在进行相应的构造、拷贝、赋值、析构的时候就可以使用<code>malloc()</code>、<code>memcpy()</code>这些C函数直接对内存进行操作，以获得更高的效率。</p>
+<p>那么如何表示其是否具有上述性质呢？用<code>true</code>和<code>false</code>这样的布尔值？当然可以，但这样的话，在使用的时候，就不方便根据不同特性来对实际函数进行重载了，因为都是<code>bool</code>类型嘛。</p>
+<p>根据SGI STL的方案，我们可以使用两个不含有任何成员的类来区分：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">true_type</span> &#123;</span> &#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">false_type</span> &#123;</span> &#125;;</span><br></pre></td></tr></table></figure>
+
+<p>不含有任何成员，就意味着开销最低。</p>
+<p>然后使用实现基本的<code>type_traits</code>模板：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> type&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _false_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _false_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>在这个模板里我们先将所有性质都设为<code>false_type</code>，也就是说给所有使用该模板的类型一个最保守的值，接着使用<strong>模板特化</strong>的方法，为已知为<code>true_type</code>的类型提供特化版本。例如：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 针对各种算术整型的特化版本</span></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;bool&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _true_type;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;char&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _true_type;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>指针类型当然也具有上述性质，但是对于指针就没必要一个个特化了，只需要使用<strong>偏特化</strong>就可以覆盖各种类型的指针了：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 针对指针的偏特化版本</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> type&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;type*&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = true_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-一点小扩展–is-const的实现"><a href="#4-一点小扩展–is-const的实现" class="headerlink" title="4 一点小扩展–is_const的实现"></a>4 一点小扩展–<code>is_const</code>的实现</h2><p>C++11的标准中加入了<code>decltype</code>关键字，使得许多原本需要使用<code>traits</code>技巧来取得对象类型的地方可以直接使用<code>decltype()</code>，避免了各种弯弯绕绕。比如在第一节迭代器的例子里。</p>
+<p>但<code>traits</code>技巧依然在许多地方很有用，事实上即使是最新的各版本STL实现，依然有着广泛使用。比如我们可以使用类似技巧来实现<code>is_const</code>，其作用是判断一个类型是否是<code>const</code>的。实现如下</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 一个辅助实现 true_type 和 false_type 的类</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, T v&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">intergral_constant</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> value_type = T;</span><br><span class="line">    <span class="keyword">using</span> type       = intergral_constant&lt;T, v&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> T value = v;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> true_type = intergral_constant&lt;<span class="keyword">bool</span>, <span class="literal">true</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> false_type = intergral_constant&lt;<span class="keyword">bool</span>, <span class="literal">false</span>&gt;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受普通类型时继承 false_type ,此时其静态成员 value 为 false</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">is_const</span>:</span> <span class="keyword">public</span> false_type &#123; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 偏特化使得接受 const 类型时继承 true_type，此时其静态成员 value 为 true</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">is_const</span>&lt;const T&gt;:</span> <span class="keyword">public</span> true_type &#123; &#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-附录"><a href="#5-附录" class="headerlink" title="5 附录"></a>5 附录</h2><p>本部分代码已上传到 github，<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">代码链接在这里</a>。</p>
+]]></content>
+      <categories>
+        <category>C++</category>
+        <category>STL</category>
+      </categories>
+      <tags>
+        <tag>STL</tag>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>hexo 个人博客基于 NexT 主题的基本配置和定制优化</title>
     <url>/2019/12/30/CustomBlogTheme/</url>
     <content><![CDATA[<p>本网站的主题修改主要参照<a href="http://yearito.cn/" target="_blank" rel="noopener">这位大佬的博客</a>，但其边缘波动的部分配置是无效的，下文有详细介绍。</p>

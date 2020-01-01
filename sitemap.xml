@@ -2,6 +2,41 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/</loc>
+    
+    <lastmod>2020-01-01T15:15:31.316Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://yoursite.com/archives/index.html</loc>
+    
+    <lastmod>2020-01-01T12:46:30.914Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://yoursite.com/about/index.html</loc>
+    
+    <lastmod>2020-01-01T12:46:24.931Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://yoursite.com/tags/index.html</loc>
+    
+    <lastmod>2020-01-01T12:45:58.678Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://yoursite.com/categories/index.html</loc>
+    
+    <lastmod>2020-01-01T12:45:52.258Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2019/12/30/CustomBlogTheme/</loc>
     
     <lastmod>2019-12-31T04:31:11.122Z</lastmod>
@@ -33,34 +68,6 @@
     <loc>http://yoursite.com/googlea64ea303b8d1b612.html</loc>
     
     <lastmod>2019-12-28T17:01:24.336Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/about/index.html</loc>
-    
-    <lastmod>2019-12-28T15:04:33.768Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/archives/index.html</loc>
-    
-    <lastmod>2019-12-28T15:03:23.164Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/categories/index.html</loc>
-    
-    <lastmod>2019-12-28T15:00:52.914Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/tags/index.html</loc>
-    
-    <lastmod>2019-12-28T15:00:11.514Z</lastmod>
     
   </url>
   
