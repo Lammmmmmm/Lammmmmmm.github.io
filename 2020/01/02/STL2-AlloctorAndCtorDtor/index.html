@@ -151,15 +151,15 @@
 
 
 
-  <meta name="description" content="本篇文章是 TinySTL 实现的系列文章的第一篇。撰写初衷是为了对学习《STL 源码剖析》一书所做的总结回顾，并记录一些思考，顺便也作为我参照SGI STL源码实现的一个 TinySTL 项目的介绍文档，相关代码会陆续上传到我的github。 1 traits 编程技法traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。  作用：通过函数模板来对具体对象或变量进行">
+  <meta name="description" content="本篇文章是TinySTL实现的系列文章的第二篇，介绍了allocator模板类的作用和实现，以及其使用到的全局construct、destroy函数的实现。相关代码依然可以在我的github。 1 allocator 的作用关于为什么要有allocator类知乎上有专门的讨论，这里简单总结一下allocator的作用。 在C++中常用的内存配置和释放操作一般会使用new和delete，如下 123">
 <meta property="og:type" content="article">
-<meta property="og:title" content="TinySTL实现项目（一）：traits 技巧与 type_traits 模板">
-<meta property="og:url" content="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/index.html">
+<meta property="og:title" content="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
+<meta property="og:url" content="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/index.html">
 <meta property="og:site_name" content="Chou Bin&#39;s Blog">
-<meta property="og:description" content="本篇文章是 TinySTL 实现的系列文章的第一篇。撰写初衷是为了对学习《STL 源码剖析》一书所做的总结回顾，并记录一些思考，顺便也作为我参照SGI STL源码实现的一个 TinySTL 项目的介绍文档，相关代码会陆续上传到我的github。 1 traits 编程技法traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。  作用：通过函数模板来对具体对象或变量进行">
+<meta property="og:description" content="本篇文章是TinySTL实现的系列文章的第二篇，介绍了allocator模板类的作用和实现，以及其使用到的全局construct、destroy函数的实现。相关代码依然可以在我的github。 1 allocator 的作用关于为什么要有allocator类知乎上有专门的讨论，这里简单总结一下allocator的作用。 在C++中常用的内存配置和释放操作一般会使用new和delete，如下 123">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2020-01-01T12:37:14.399Z">
-<meta property="article:modified_time" content="2020-01-02T13:32:10.811Z">
+<meta property="article:published_time" content="2020-01-02T13:15:19.308Z">
+<meta property="article:modified_time" content="2020-01-02T13:56:38.939Z">
 <meta property="article:author" content="Chou Bin">
 <meta property="article:tag" content="STL">
 <meta property="article:tag" content="C++">
@@ -170,7 +170,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/"/>
 
 
 
@@ -180,7 +180,7 @@
   };
 </script>
 
-  <title>TinySTL实现项目（一）：traits 技巧与 type_traits 模板 | Chou Bin's Blog</title>
+  <title>TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy | Chou Bin's Blog</title>
   
 
 
@@ -388,7 +388,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Chou Bin">
@@ -405,7 +405,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">TinySTL实现项目（一）：traits 技巧与 type_traits 模板
+          <h1 class="post-title" itemprop="name headline">TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy
               
             
           </h1>
@@ -430,7 +430,7 @@
                 
               
 
-              <time title="创建时间：2020-01-01 20:37:14" itemprop="dateCreated datePublished" datetime="2020-01-01T20:37:14+08:00">2020-01-01</time>
+              <time title="创建时间：2020-01-02 21:15:19" itemprop="dateCreated datePublished" datetime="2020-01-02T21:15:19+08:00">2020-01-02</time>
             
 
             
@@ -470,8 +470,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2020/01/01/STL1-TraitsAndType-traitsTemplate/#comments" itemprop="discussionUrl">
-                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/01/01/STL1-TraitsAndType-traitsTemplate/" itemprop="commentCount"></span>
+                <a href="/2020/01/02/STL2-AlloctorAndCtorDtor/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/01/02/STL2-AlloctorAndCtorDtor/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -479,7 +479,7 @@
 
           
           
-             <span id="/2020/01/01/STL1-TraitsAndType-traitsTemplate/" class="leancloud_visitors" data-flag-title="TinySTL实现项目（一）：traits 技巧与 type_traits 模板">
+             <span id="/2020/01/02/STL2-AlloctorAndCtorDtor/" class="leancloud_visitors" data-flag-title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -507,7 +507,7 @@
                 
                   <span class="post-meta-item-text">本文字数：</span>
                 
-                <span title="本文字数">16k</span>
+                <span title="本文字数">22k</span>
               
 
               
@@ -521,7 +521,7 @@
                 
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
-                <span title="阅读时长">27 分钟</span>
+                <span title="阅读时长">36 分钟</span>
               
             </div>
           
@@ -541,62 +541,62 @@
       
 
       
-        <p>本篇文章是 TinySTL 实现的系列文章的第一篇。撰写初衷是为了对学习《STL 源码剖析》一书所做的总结回顾，并记录一些思考，顺便也作为我参照SGI STL源码实现的一个 TinySTL 项目的介绍文档，相关代码会陆续上传到<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">我的github</a>。</p>
-<h2 id="1-traits-编程技法"><a href="#1-traits-编程技法" class="headerlink" title="1 traits 编程技法"></a>1 traits 编程技法</h2><p>traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。</p>
+        <p>本篇文章是TinySTL实现的系列文章的第二篇，介绍了<code>allocator</code>模板类的作用和实现，以及其使用到的全局<code>construct</code>、<code>destroy</code>函数的实现。相关代码依然可以在<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">我的github</a>。</p>
+<h2 id="1-allocator-的作用"><a href="#1-allocator-的作用" class="headerlink" title="1 allocator 的作用"></a>1 allocator 的作用</h2><p>关于为什么要有<code>allocator</code>类知乎上有专门的讨论，这里简单总结一下<code>allocator</code>的作用。</p>
+<p>在C++中常用的内存配置和释放操作一般会使用<code>new</code>和<code>delete</code>，如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Foo</span> &#123;</span> ... &#125;;</span><br><span class="line">Foo* ptr = <span class="keyword">new</span> Foo;	<span class="comment">// 配置内存，然后构造对象</span></span><br><span class="line"><span class="keyword">delete</span> ptr;		    <span class="comment">// 调用对象的析构函数将对象析构，然后释放内存</span></span><br></pre></td></tr></table></figure>
+
+<p>如同注释所说，<code>new</code>其实包含了两步操作：</p>
 <ul>
-<li>作用：通过函数模板来对具体对象或变量进行推导以<strong>获取其类型</strong>或<strong>某种特性</strong>。</li>
-<li>目的1：针对获得的类型和某种特性来对<strong>实现函数进行优化以达到更高的性能</strong>。</li>
-<li>目的2：通过提取出的类型<strong>作为模板函数的返回类型</strong>，方便函数实现。</li>
+<li>调用<code>::operator new</code>配置内存</li>
+<li>调用类构造函数<code>Foo:Foo()</code>来构造对象</li>
 </ul>
-<p>关于目的1，这里可以举一个迭代器的例子。例如 STL 中的迭代器型别有五种类型</p>
-<div class="note info"><ul><li>Input iterator，能读不能写，只支持自增运算。也就是只能用<code>iter++</code>或<code>++iter</code>来一步步前进而不能后退。</li><li>Output iterator ，能写不能读，只支持自增运算</li><li>Forward iterator ，能读能写，只支持自增运算</li><li>Bidirectional iterator ，能读能写，支持自增和自减运算。可以<code>iter++</code>、<code>++iter</code>，也可以<code>iter--</code>、<code>--iter</code>，但依然每次只能前进后退一步。</li><li>Random access iterator ，能读能写，能自增自减还能进行运算，如可以用<code>iter+=5</code>，<code>iter-=5</code>来前进或后退5步。</li></ul></div>
-
-<p>比如我有个迭代器<code>iter</code>，现在有个操作要求<code>iter</code>前进<code>n</code>步来读写数据。</p>
-<p>因为事先不知道迭代器的类型，我只能保守地猜测其只能自增自减，这样<span class="label danger">复杂度就是O(n)</span>，但如果我运用<code>traits</code>技巧使用模板<code>iterator_traits&lt;iter&gt;::category</code>（后续会介绍，现在只需要知道其可以获得迭代器类型即可）来获得迭代器类型知道了其是<code>Randon access iterator</code>，那么直接<code>iter += n</code>即可，<span class="label danger">此时复杂度就是O(1)</span>。</p>
-<p>对于目的2，这里也简单说一下。因为在C++11之前并没有<code>decltype</code>关键字，所以在编写模板函数的时候，函数返回类型是不能通过模板参数推导的，这时就可以使用<code>traits</code>技巧来获得类型作为模板函数的返回类型。</p>
-<p>比如现在有个模板函数需要接受一个函数迭代器，然后返回其指向的值，那么模板参数是迭代器，函数的返回类型却是其指向值的类型。显然没办法通过模板参数推导来得到迭代器的指向值类型，这时就可以对迭代器使用<code>traits</code>技巧来提取其指向值类型作为函数的返回类型。</p>
-<p>如果对迭代器类型不太熟悉还不太懂那也没关系，后续文章还会详细介绍，先接着往下看。</p>
-<h2 id="2-POD类型"><a href="#2-POD类型" class="headerlink" title="2 POD类型"></a>2 POD类型</h2><p>要说<code>type_traits</code>模板就必须先说<code>POD</code>类型。</p>
-<p>POD 是 Plain Old Data 的缩写，是 C++ 定义的一类数据结构概念，比如 <code>int</code>、<code>float</code> 等都是 POD 类型的。Plain 代表它是一个普通类型，Old 代表它是旧的，与 C 语言兼容，那么就可以使用 <code>memcpy()</code> 这种最原始的函数进行操作。两个系统进行交换数据，如果没有办法对数据进行语义检查和解释，那就只能以非常底层的数据形式进行交互，而拥有 POD 特征的类或者结构体通过二进制拷贝后依然能保持数据结构不变。</p>
-<p><strong>也就是说，能用 C 的 memcpy() 等函数进行操作的类型就是 POD 类型的数据</strong>。 </p>
-<p>在C++的各标准中对POD类型的有详细定义，从使用中可以概括为<strong>标量类型</strong>和<strong>POD类</strong>。</p>
+<p><code>delete</code>也包含了两步操作：</p>
 <ul>
-<li>标量类型：整型(<code>char</code>、<code>int</code>等等)，浮点型(<code>double</code>、<code>float</code>等等)，枚举类型，指针类型，指向成员指针类型，<code>std::nullptr_t</code>类型。</li>
-<li>POD类：包括满足 trivial 条件和 standard-layout 条件的<code>struct</code>、<code>class</code>、<code>union</code>。<ul>
-<li><strong>只有默认</strong>的构造/析构函数、拷贝/移动函数、拷贝/移动运算符。</li>
-<li>不能有<strong>虚函数</strong>和<strong>虚基类</strong>。</li>
-<li><strong>普通成员有相同的访问级别</strong>，如类成员都为<code>public</code>或都为<code>private</code>或都为<code>protected</code>。</li>
-<li>第一个成员为自身的数据成员，而不能是由父类定义的数据。</li>
-<li>只要有父类，<strong>普通成员只能在其中一个类中</strong>，不可分散。</li>
+<li>调用类析构函数<code>Foo:~Foo()</code>将对象析构</li>
+<li>调用<code>::operator delete</code>来释放对象所占的内存</li>
 </ul>
-</li>
-</ul>
-<p>可以使用<code>std::is_pod&lt;classname&gt;::value</code>的值来判断一个类是否为POD类型。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="comment">//满足POD类型条件</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A1</span>&#123;</span></span><br><span class="line">    <span class="keyword">int</span> a;</span><br><span class="line">    <span class="keyword">double</span> b;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// A2继承了A1但父类子类同时有成员且A2的第一个成员为A1类型，故而不是pod类型</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A2</span>:</span><span class="keyword">public</span> A1&#123;</span><br><span class="line">    A1 num1;</span><br><span class="line">    <span class="keyword">double</span> num2;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    A1 a1;</span><br><span class="line">    A2 a2;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::is_pod&lt;A1&gt;::value &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::is_pod&lt;A2&gt;::value &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里简单解释一下什么是<code>::perator new</code>和<code>::operator delete</code>：</p>
+<div class="note info"><p>上文的<code>new</code>也被称为<code>new operator</code>，如上所述包含了分配内存、构造对象两步操作，不能被重载；</p><p>而<code>::operator new</code>接受一个类型为<code>size_t</code>的参数作为要求的空间大小，<strong>只分配所要求的空间</strong>，而不调用相关对象的构造函数。可以被重载。</p><p><code>::operator delete</code>类似，一般接受一个指针类型的参数，<strong>只释放指针所占的内存</strong>，可以被重载。</p></div>
 
-<p>那么知道了一个对象或变量是不是POD类型有什么用呢？答案是以此<strong>提高程序运行效率</strong>。</p>
-<p>假如事先知道了某函数的操作对象是POD类型，那么我们就可以针对其特性，使用底层的<code>memcpy()</code>、<code>memove()</code>等C函数对其操作，而不需要调用类似<code>constructor</code>，<code>destructor</code>等函数。这在大规模而操作频繁的程序中有显著的效率提升。</p>
-<h2 id="3-type-traits-模板"><a href="#3-type-traits-模板" class="headerlink" title="3 type_traits 模板"></a>3 type_traits 模板</h2><p><code>type_traits</code>在SGT STL 2.91版本中命名为<code>__type_traits</code>，因为当时并未加入STL标准，属于SGI的“私房菜”，故而命名前有两个下划线，这里为了方便描述就去掉了开头的下划线。</p>
-<p>从前文已经得知<code>traits</code>编程技巧的作用是为了<strong>取得对象或变量的某种特性</strong>，而目的则是为了根据<strong>特性作出相应优化而提升效率</strong>。而这里的<code>type_traits</code>模板所能取得特性就是是否具有所谓“平凡”（<code>trivial</code>）的默认构造函数、拷贝构造函数、赋值运算符、析构函数，以及是否是POD类型。如果具有上述的性质，那么在进行相应的构造、拷贝、赋值、析构的时候就可以使用<code>malloc()</code>、<code>memcpy()</code>这些C函数直接对内存进行操作，以获得更高的效率。</p>
-<p>那么如何表示其是否具有上述性质呢？用<code>true</code>和<code>false</code>这样的布尔值？当然可以，但这样的话，在使用的时候，就不方便根据不同特性来对实际函数进行重载了，因为都是<code>bool</code>类型嘛。</p>
-<p>根据SGI STL的方案，我们可以使用两个不含有任何成员的类来区分：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">true_type</span> &#123;</span> &#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">false_type</span> &#123;</span> &#125;;</span><br></pre></td></tr></table></figure>
+<p>在STL里面<code>allocator</code>的作用就是将以上<code>new</code>和<code>delete</code>的两步操作区分开来，用<code>allocator::allocate()</code>来分配内存，用<code>::construct()</code>来构造对象，用<code>allocator::deallocate()</code>释放内存，用<code>::destroy()</code>来析构对象。主要用在为各种容器如<code>vector</code>、<code>list</code>分配空间完成构造。</p>
+<p>这样的好处就是，有时已经有现成的内存空间可以用了，这时我想构造对象的时候就直接用<code>construct()</code>，而无需花费时间去寻找新的一块内存，然后再分配内存，最后才能构造对象。</p>
+<div class="note danger"><p>C++中内存管理十分重要，要建立好概念，分配内存对应释放内存，构造对应析构。例如<code>malloc()</code>对应<code>free()</code>，<code>construct</code>对应<code>destroy</code>，<code>new</code>对应<code>delete</code>。</p></div>
 
-<p>不含有任何成员，就意味着开销最低。</p>
-<p>然后使用实现基本的<code>type_traits</code>模板：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> type&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _false_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _false_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="2-简单的allocator类实现"><a href="#2-简单的allocator类实现" class="headerlink" title="2 简单的allocator类实现"></a>2 简单的allocator类实现</h2><p>在STL标准中，要求了<code>allocator</code>具有以下接口</p>
+<figure class="highlight c++"><figcaption><span>allocator.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">allocator</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// STL 要求的类型别名定义</span></span><br><span class="line">    <span class="keyword">using</span> value_type        = T;</span><br><span class="line">    <span class="keyword">using</span> pointer           = T*;</span><br><span class="line">    <span class="keyword">using</span> const_pointer     = <span class="keyword">const</span> T*;</span><br><span class="line">    <span class="keyword">using</span> reference         = T&amp;;</span><br><span class="line">    <span class="keyword">using</span> const_reference   = <span class="keyword">const</span> T&amp;;</span><br><span class="line">    <span class="keyword">using</span> size_type         = <span class="keyword">size_t</span>;</span><br><span class="line">    <span class="keyword">using</span> difference_type   = <span class="keyword">ptrdiff_t</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// STL 要求的类接口，使用静态函数实现可以使频繁调用下减小开销</span></span><br><span class="line">    <span class="comment">// 负责分配内存</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> T*	<span class="title">allocate</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> T*	<span class="title">allocate</span><span class="params">(size_type n)</span></span>;</span><br><span class="line">	<span class="comment">// 负责释放内存</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T*, size_type n)</span></span>;</span><br><span class="line">	<span class="comment">// 负责构造对象</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr, <span class="keyword">const</span> T&amp; value)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr, T&amp;&amp; value)</span></span>;</span><br><span class="line">	<span class="comment">// 负责析构对象</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* first, T* last)</span></span>;</span><br><span class="line">	<span class="comment">// 获取某对象的地址</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> T*       <span class="title">address</span><span class="params">(T&amp; val)</span></span>;</span><br><span class="line">    <span class="comment">// 获取可配置T类型对象的最大数目</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> size_t   <span class="title">max_size</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="comment">// 使T类型的alloctor可以为U类型的对象分配内存</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebind</span> &#123;</span></span><br><span class="line">        <span class="keyword">using</span> other = allocator&lt;U&gt;;</span><br><span class="line">    &#125;; </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
-<p>在这个模板里我们先将所有性质都设为<code>false_type</code>，也就是说给所有使用该模板的类型一个最保守的值，接着使用<strong>模板特化</strong>的方法，为已知为<code>true_type</code>的类型提供特化版本。例如：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 针对各种算术整型的特化版本</span></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;bool&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _true_type;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;char&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _true_type;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>从上述代码可以看出，<code>allocator</code>类主要分为类型别名定义的接口和“干活”接口。</p>
+<p>其中类型别名定义部分在STL模板类的实现里非常常见，包括后续的各种迭代器和容器如<code>vector</code>、<code>list</code>等内部都有各种别名定义，且接口基本统一。其作用类似<a href="https://choubin.site/2020/01/01/STL1-TraitsAndType-traitsTemplate/" target="_blank" rel="noopener">本系列上篇</a>所说<code>traits</code>技巧，可以通过这些统一的内嵌别名定义，从模板类或其对象里直接取得所需类型，方便函数的实现和使用。后续在迭代器和容器设计的部分将会看到。</p>
+<p>而“干活”的接口主要就是负责分配内存、释放内存、构造/析构对象，显然如第一节所说，我们可以使用<code>::operator new</code>、<code>::operator delete</code>、对象的构造/析构函数来实现这些功能。</p>
+<p>注意这些干活的接口都是以类中的<strong>静态成员函数</strong>实现的，为什么要用静态函数？<strong>依然是为了效率</strong>。 </p>
+<div class="note info"><p>普通的成员函数一般都隐含一个<code>this</code>指针，静态成员函数由于不与任何对象相联系，故而不具有<code>this</code>指针。</p><p>正是由于没有<code>this</code>指针的额外开销，因此静态成员函数与类的普通成员函数相比<strong>速度会有少许提升</strong>。同时调用静态成员函数时既可以通过类的对象、指向类对象的指针来调用，也<strong>可以直接使用类名来调用</strong>，这样就节省了创建对象的开销。</p><p>也正是因为以上原因，静态成员之间可以相互访问，但不能访问非静态成员函数和非静态数据成员</p></div>
 
-<p>指针类型当然也具有上述性质，但是对于指针就没必要一个个特化了，只需要使用<strong>偏特化</strong>就可以覆盖各种类型的指针了：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 针对指针的偏特化版本</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> type&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;type*&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = true_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>部分实现如下</p>
+<figure class="highlight c++"><figcaption><span>allocator.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用::operator new实现，分配内存并返回空指针</span></span><br><span class="line"><span class="comment">// 使用static_cast将返回的void指针转换为目标类型的指针</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">T* allocator&lt;T&gt;::allocate(size_type n) &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;T*&gt;(::<span class="keyword">operator</span> <span class="keyword">new</span>(n * <span class="keyword">sizeof</span>(T)));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 使用::operator delete释放指针指向内存</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::deallocate(T* ptr) &#123;</span><br><span class="line">	<span class="keyword">if</span> (ptr != <span class="literal">nullptr</span>) ::<span class="function"><span class="keyword">operator</span> <span class="title">delete</span><span class="params">(ptr)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 负责构造对象，对全局函数construct()的调用</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::construct(T* ptr) &#123;</span><br><span class="line">	mystl::construct(ptr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::construct(T* ptr, <span class="keyword">const</span> T&amp; value) &#123;</span><br><span class="line">	mystl::construct(ptr, value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::construct(T* ptr, T&amp;&amp; value) &#123;</span><br><span class="line">	mystl::construct(ptr, mystl::<span class="built_in">move</span>(value));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 负责析构对象，对全局函数destroy()的调用</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::destroy(T* ptr) &#123;</span><br><span class="line">	mystl::destroy(ptr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::destroy(T* first, T* last) &#123;</span><br><span class="line">	mystl::destroy(first, last);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="4-一点小扩展–is-const的实现"><a href="#4-一点小扩展–is-const的实现" class="headerlink" title="4 一点小扩展–is_const的实现"></a>4 一点小扩展–<code>is_const</code>的实现</h2><p>C++11的标准中加入了<code>decltype</code>关键字，使得许多原本需要使用<code>traits</code>技巧来取得对象类型的地方可以直接使用<code>decltype()</code>，避免了各种弯弯绕绕。比如在第一节迭代器的例子里。</p>
-<p>但<code>traits</code>技巧依然在许多地方很有用，事实上即使是最新的各版本STL实现，依然有着广泛使用。比如我们可以使用类似技巧来实现<code>is_const</code>，其作用是判断一个类型是否是<code>const</code>的。实现如下</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 一个辅助实现 true_type 和 false_type 的类</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, T v&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">intergral_constant</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> value_type = T;</span><br><span class="line">    <span class="keyword">using</span> type       = intergral_constant&lt;T, v&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> T value = v;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> true_type = intergral_constant&lt;<span class="keyword">bool</span>, <span class="literal">true</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> false_type = intergral_constant&lt;<span class="keyword">bool</span>, <span class="literal">false</span>&gt;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受普通类型时继承 false_type ,此时其静态成员 value 为 false</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">is_const</span>:</span> <span class="keyword">public</span> false_type &#123; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 偏特化使得接受 const 类型时继承 true_type，此时其静态成员 value 为 true</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">is_const</span>&lt;const T&gt;:</span> <span class="keyword">public</span> true_type &#123; &#125;;</span><br></pre></td></tr></table></figure>
+<p>在<code>allocate()</code>的实现上，用了<code>static_cast</code>静态转换，这是因为<code>::operator new</code>返回的是<code>void*</code>类型，需要做一个强制类型转换来确保类型安全。</p>
+<div class="note info"><ul><li><p>编译器隐式执行的任何类型转换都可以由<code>static_cast</code>来完成，比如<code>int</code>与<code>float</code>、<code>double</code>与<code>char</code>、<code>enum</code>与<code>int</code>之间的转换等</p></li><li><p>使用<code>static_cast</code>可以找回存放在<code>void*</code>指针中的值</p></li><li><p><code>static_cast</code>可以把任何类型的表达式转换成<code>void</code>类型</p></li><li><p><code>static_cast</code>把任何类型的表达式转换成<code>void</code>类型</p></li><li><p>与<code>const_cast</code>相比，<code>static_cast</code>不能改变变量的<code>const</code>属性，也包括<code>volitale</code>或<code>__unaligned</code>属性</p></li></ul></div>
 
-<h2 id="5-附录"><a href="#5-附录" class="headerlink" title="5 附录"></a>5 附录</h2><p>本部分代码已上传到 github，<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">代码链接在这里</a>。</p>
+<p>以上实现都在 TinySTL 项目的头文件 <code>allocator.h</code>中。</p>
+<p>那么<code>allocator&lt;T&gt;::construct()</code>和<code>allocator&lt;T&gt;::destroy()</code>分别调用的全局<code>construct()</code>和<code>destroy()</code>函数又是什么呢？见下一小节介绍。</p>
+<h2 id="3-全局construct-和destroy"><a href="#3-全局construct-和destroy" class="headerlink" title="3 全局construct()和destroy()"></a>3 全局<code>construct()</code>和<code>destroy()</code></h2><p>顾名思义，全局<code>construct()</code>的作用就是构造对象。在上一节中，我们知道分配内存的操作已经由<code>allocator&lt;T&gt;::allocate()</code>完成了，而这个<code>construct()</code>，就是将一个初值设定到已经分配好的的空间上去。因此其需要两个参数，一个是指针来表示内存的位置，另一个是我们希望设定的初值。其中一个实现版本如下：</p>
+<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用了两个模板参数，并使用类型转换</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T1, <span class="keyword">typename</span> T2&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T1* ptr, <span class="keyword">const</span> T2&amp; value)</span> </span>&#123; <span class="keyword">new</span>(ptr) T1(value); &#125; <span class="comment">// placement new</span></span><br></pre></td></tr></table></figure>
+
+<p>这里用两个模板参数的好处是可以使得函数在使用上更具“通用性”，同时使用了强制类型转换，使得不会产生隐式转换的警告。</p>
+<div class="note danger"><p>这里的<code>new</code>不同于第一节中提到的<code>new operator</code>和<code>operator new</code>，而是所谓的<code>placement new</code>。其实<code>placement new</code>只是<code>operator new</code>的一个重载版本。它并不分配内存，返回值是指向已分配好内存的指针。其作用就是在已分配的内存中创建一个对象，这是<code>new</code>做不到的。</p><p><code>placement new</code>的作用是构造对象，故而对应了析构。其对象在使用结束后要记得析构。</p></div>
+
+<p>上文已经强调了构造对应了析构，显然<code>destroy()</code>的作用就是将对象析构了，那么其实现就可以非常简单，只需调用对象的析构函数即可。</p>
+<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 单个参数的全局 destroy 函数，直接调用对象的析构函数</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* ptr)</span> </span>&#123; ptr -&gt;~T(); &#125;</span><br></pre></td></tr></table></figure>
+
+<p>另外<code>destroy()</code>还有两个参数的重载版本，其接受两个迭代器，表示将一个范围内的对象析构。</p>
+<p>而在本系列的<a href="https://choubin.site/2020/01/01/STL1-TraitsAndType-traitsTemplate/" target="_blank" rel="noopener">上篇文章</a>中已经介绍了POD类型，并提到了<code>trivial destructor</code>的概念。在对大范围的对象析构的时候，如果我们事先得知该对象的类型具有<code>trivial destructor</code>，即所谓的“平凡”或者说无意义的析构函数，那么我们就没有必要浪费开销来挨个调用这些无关痛痒的析构函数。</p>
+<p>为什么说无关痛痒？因为并不涉及外部内存，对象本身的内存可以继续复用，所以<strong>不调用也不会造成内存泄露</strong>。只有在对象类型具有<code>non-trivial destructor</code>的时候，才有必要一次次调用其析构函数。</p>
+<p>总之，如果得知对象类型具有<code>trivial destructor</code>，那么我们的<code>destroy()</code>函数可以什么也不做，无需付出复杂度为O(n)的多余开销，大大地提升了程序效率。所以我们需要针对这点对<code>destroy()</code>进行优化。代码如下</p>
+<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// destroy()内部调用的函数，根据对象类型是否有trivial destructor进行重载</span></span><br><span class="line"><span class="comment">// aux 为 auxiliary 缩写，表示其是辅助的函数</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy_aux</span><span class="params">(ForwardIterator first, ForwardIterator last, _true_type)</span> </span>&#123; &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy_aux</span><span class="params">(ForwardIterator first, ForwardIterator last, _false_type)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(; first != last; ++first)</span><br><span class="line">        destroy(first);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 两个参数的全局 destroy 函数，根据其是否具有 trivial 析构函数进行重载</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(ForwardIterator first, ForwardIterator last)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// value_type()函数可以取得迭代器指向对象的类型</span></span><br><span class="line">    <span class="keyword">using</span> is_trivial_dtor = type_traits&lt;value_type(first)()&gt;::has_trivial_destructor;</span><br><span class="line">    destroy_aux(first, last, is_trivial_dtor());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>destroy()</code>函数在接受到两个迭代器以后，先用<code>value_type()</code>函数取得迭代器所指向对象的类型，然后将类型放入<code>type_traits</code>模板中，调用其内嵌的类型别名定义，创建一个类型为<code>_true_type</code>或者<code>_false_true</code>的对象作为第三个参数，来调用辅助函数<code>destroy_aux</code>，以此判断迭代器指向的对象是否拥有<code>trivial destructor</code>。</p>
+<h2 id="4-结束语"><a href="#4-结束语" class="headerlink" title="4 结束语"></a>4 结束语</h2><p>本方案实现的<code>allocator</code>类是比较简单的，从实现上也可以看出其仅仅是对<code>operator new</code>、<code>operator delete</code>、<code>placement new</code>的封装。并不是具有SGI STL特色，使用更底层的<code>malloc</code>、<code>free</code>以及内存池机制的两级空间分配器，后续将会对此进行实现，并使用同一种容器来比较两者效率。本节代码已上传，<a href="https://github.com/Lammmmmmm/TinySTL/blob/master/allocator.h" target="_blank" rel="noopener">allocator.h</a>，<a href="https://github.com/Lammmmmmm/TinySTL/blob/master/construct.h" target="_blank" rel="noopener">construct.h</a>。</p>
 
       
     </div>
@@ -611,7 +611,7 @@
     <li class="popular-posts-item">
       
       
-      <div class="popular-posts-title"><a href="\2020\01\02\STL2-AlloctorAndCtorDtor\" rel="bookmark">TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy</a></div>
+      <div class="popular-posts-title"><a href="\2020\01\01\STL1-TraitsAndType-traitsTemplate\" rel="bookmark">TinySTL实现项目（一）：traits 技巧与 type_traits 模板</a></div>
       
     </li>
   
@@ -684,7 +684,7 @@
   <!-- 本文标题 -->
   <li>
     <strong>本文标题： </strong>
-    TinySTL实现项目（一）：traits 技巧与 type_traits 模板
+    TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy
   </li>
 
   <!-- 本文作者 -->
@@ -696,7 +696,7 @@
   <!-- 创建时间 -->
   <li>
     <strong>创建时间： </strong>
-    2020年01月01日 - 20时01分
+    2020年01月02日 - 21时01分
   </li>
 
   <!-- 修改时间 -->
@@ -708,14 +708,14 @@
   <!-- 引用链接 -->
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/" title="TinySTL实现项目（一）：traits 技巧与 type_traits 模板"
-      >http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/</a
+    <a href="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/" title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy"
+      >http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/</a
     >
     <span class="copy-path" title="点击复制引用链接"
       ><i
         style="cursor: pointer"
         class="fa fa-clipboard"
-        data-clipboard-text="[Chou Bin's Blog | TinySTL实现项目（一）：traits 技巧与 type_traits 模板](http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/)"
+        data-clipboard-text="[Chou Bin's Blog | TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy](http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/)"
         aria-label="复制成功"
       ></i
     ></span>
@@ -780,18 +780,14 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/01/02/STL2-AlloctorAndCtorDtor/" rel="prev" title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
-                <i class="fa fa-chevron-left"></i> TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy
-              </a>
-            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2019/12/30/CustomBlogTheme/" rel="next" title="hexo 个人博客基于 NexT 主题的基本配置和定制优化">
-                hexo 个人博客基于 NexT 主题的基本配置和定制优化 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/01/01/STL1-TraitsAndType-traitsTemplate/" rel="next" title="TinySTL实现项目（一）：traits 技巧与 type_traits 模板">
+                TinySTL实现项目（一）：traits 技巧与 type_traits 模板 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -988,7 +984,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-traits-编程技法"><span class="nav-text">1 traits 编程技法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-POD类型"><span class="nav-text">2 POD类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-type-traits-模板"><span class="nav-text">3 type_traits 模板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-一点小扩展–is-const的实现"><span class="nav-text">4 一点小扩展–is_const的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-附录"><span class="nav-text">5 附录</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-allocator-的作用"><span class="nav-text">1 allocator 的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-简单的allocator类实现"><span class="nav-text">2 简单的allocator类实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-全局construct-和destroy"><span class="nav-text">3 全局construct()和destroy()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-结束语"><span class="nav-text">4 结束语</span></a></li></ol></div>
             
 
           </div>

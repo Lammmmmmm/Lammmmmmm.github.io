@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/</loc>
+    
+    <lastmod>2020-01-02T13:56:38.939Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/</loc>
     
-    <lastmod>2020-01-02T11:35:47.775Z</lastmod>
+    <lastmod>2020-01-02T13:32:10.811Z</lastmod>
     
   </url>
   
