@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/favicon16.png?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="1 SGI STL 2.91 中空间分配器alloc的设计思想在上篇文章中，我们实现了使用::operator new和::operator delete来分配、释放内存的空间分配器allocator模板类。但在SGI STL 2.91版的源码实现中，其使用的空间分配器并非如此简单，而是以更底层的malloc()、free()来分配、释放内存，其设计哲学在《STL源码剖析》中总结如下： 向 sys">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类">
+<meta property="og:url" content="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/index.html">
+<meta property="og:site_name" content="Chou Bin&#39;s Blog">
+<meta property="og:description" content="1 SGI STL 2.91 中空间分配器alloc的设计思想在上篇文章中，我们实现了使用::operator new和::operator delete来分配、释放内存的空间分配器allocator模板类。但在SGI STL 2.91版的源码实现中，其使用的空间分配器并非如此简单，而是以更底层的malloc()、free()来分配、释放内存，其设计哲学在《STL源码剖析》中总结如下： 向 sys">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/malloc%E5%86%85%E5%AD%98.png">
+<meta property="article:published_time" content="2020-01-06T16:11:55.810Z">
+<meta property="article:modified_time" content="2020-01-06T16:17:53.117Z">
+<meta property="article:author" content="Chou Bin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/malloc%E5%86%85%E5%AD%98.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类 | Chou Bin's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Chou Bin's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-top">
+    <a href="/top/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-signal"></i> <br />热度榜</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Chou Bin">
+      <meta itemprop="description" content="慢就是快，快就是慢">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Chou Bin's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-01-07 00:11:55" itemprop="dateCreated datePublished" datetime="2020-01-07T00:11:55+08:00">2020-01-07</time>
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/01/07/STL3-SGI2StageAllocator/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/01/07/STL3-SGI2StageAllocator/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2020/01/07/STL3-SGI2StageAllocator/" class="leancloud_visitors" data-flag-title="TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">热度 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+                 <span>℃</span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">73k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">2:01</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-SGI-STL-2-91-中空间分配器alloc的设计思想"><a href="#1-SGI-STL-2-91-中空间分配器alloc的设计思想" class="headerlink" title="1 SGI STL 2.91 中空间分配器alloc的设计思想"></a>1 SGI STL 2.91 中空间分配器alloc的设计思想</h2><p>在<a href="https://choubin.site/2020/01/02/STL2-AlloctorAndCtorDtor/" target="_blank" rel="noopener">上篇文章</a>中，我们实现了使用<code>::operator new</code>和<code>::operator delete</code>来分配、释放内存的空间分配器<code>allocator</code>模板类。但在SGI STL 2.91版的源码实现中，其使用的空间分配器并非如此简单，而是以更底层的<code>malloc()</code>、<code>free()</code>来分配、释放内存，其设计哲学在《STL源码剖析》中总结如下：</p>
+<div class="note info"><ul><li>向 system heap 要求空间</li><li>考虑多线程状态</li><li>考虑内存不足时的应变措施</li><li>考虑过多小型区块可能造成的<strong>内存碎片（fragment）</strong>问题</li></ul></div>
+
+<p>而其避免<strong>内存碎片问题</strong>的方法就是设计了两级分配器</p>
+<ul>
+<li><p>第一级分配器：当一次要求的内存<strong>超过</strong>128bytes时使用，其直接使用<code>malloc()</code>、<code>free()</code></p>
+</li>
+<li><p>第二级分配器：当一次要求的内存<strong>小于</strong>128bytes时使用， 采用了内存池<code>memory pool</code>整理方式，维护了16个链表，这些链表分别负责从8bytes、16bytes、24bytes直到128bytes的16种小型内存块的分配。</p>
+</li>
+</ul>
+<p>其中第一级分配器还考虑了<strong>OOM(out of memory)</strong>时的处理，实现了类似C++中<code>new-handler</code>的机制，使得在内存不足抛出<code>std::bad_alloc</code>异常前，可以调用一个用户自行定义的函数来尝试解决内存不足问题，如果用户没有定义该函数，则直接抛出<code>std::bad_alloc</code>异常。</p>
+<p>而在实现中，甚至都没有完全符合STL标准，比如<code>alloc::construct</code>就不存在，这里简单说一下其具体实现。</p>
+<h3 id="1-1-SGI-的第一级分配器"><a href="#1-1-SGI-的第一级分配器" class="headerlink" title="1.1 SGI 的第一级分配器"></a>1.1 SGI 的第一级分配器</h3><p>第一级分配器：一个名为<code>__malloc_alloc_template&lt;int inst&gt;</code>的模板类，模板参数实际上并没用上；分别基于<code>malloc()</code>、<code>free()</code>、<code>realloc()</code>来实现<code>allocate()</code>、<code>deallocate()</code>、<code>reallocate()</code>这三个<code>public</code>成员函数；另外拥有一个函数指针类型的静态成员<code>malloc_alloc_oom_handler</code>和设定该静态成员的<code>public</code>成员函数<code>set_malloc_handler</code>，这是用于实现上述<code>new-handler</code>机制的；最后还有两个<code>private</code>的函数<code>oom_malloc</code>、<code>oom_realloc</code>来处理OOM情况，这两个函数会先调用之前的那个函数指针静态成员所指向的函数，然后再尝试分配内存，如果用户没有实现设定该静态成员指向的函数，会直接报错<code>cerr &lt;&lt; “out of memory”</code>然后<code>exit(1)</code>中止程序。部分实现如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">int</span> inst&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">malloc_alloc_template</span> &#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> *<span class="title">oom_malloc</span><span class="params">(<span class="keyword">size_t</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> *<span class="title">oom_realloc</span><span class="params">(<span class="keyword">void</span> *, <span class="keyword">size_t</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">void</span> <span class="params">(* __malloc_alloc_oom_handler)</span><span class="params">()</span></span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> * <span class="title">allocate</span><span class="params">(<span class="keyword">size_t</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">void</span> *result = <span class="built_in">malloc</span>(n);</span><br><span class="line">    <span class="keyword">if</span> (<span class="number">0</span> == result) result = oom_malloc(n);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">size_t</span> <span class="comment">/* n */</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">free</span>(p);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> * <span class="title">reallocate</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">size_t</span> <span class="comment">/* old_sz */</span>, <span class="keyword">size_t</span> new_sz)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">void</span> * result = <span class="built_in">realloc</span>(p, new_sz);</span><br><span class="line">    <span class="keyword">if</span> (<span class="number">0</span> == result) result = oom_realloc(p, new_sz);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">void</span> <span class="params">(* set_malloc_handler(<span class="keyword">void</span> (*f)()))</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">void</span> (* old)() = __malloc_alloc_oom_handler;</span><br><span class="line">    __malloc_alloc_oom_handler = f;</span><br><span class="line">    <span class="keyword">return</span>(old);</span><br><span class="line">&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-2-SGI-的第二级分配器"><a href="#1-2-SGI-的第二级分配器" class="headerlink" title="1.2 SGI 的第二级分配器"></a>1.2 SGI 的第二级分配器</h3><p>第二级分配器：具体实现有点小复杂，由于本项目使用的第二级分配器基本同SGI的一致，所以具体函数实现留待下文讲解，这里只简单总结一下其思路。同上文所述，其将小于128bytes的内存按照8bytes为间隔，划分为16种大小的内存区块，然后用16条链表来维护这些区块。</p>
+<p>比如第一条链表管理8bytes的内存块，假设其有10个节点，这10个节点每个都有8bytes的空间可以拨给用户使用，用户用<code>allocate()</code>请求8bytes大小的空间时，就返回给用户1个节点的空间，此时剩9个节点，如果用户用<code>deallocate()</code>释放了8bytes的空间，那么这个节点又会被回收到这条链表上，又变成了10个节点。其他的链表就是如此依次维护16bytes、24bytes、32bytes等等大小的内存块。</p>
+<p>那如果用户请求的bytes数目大小不是8的倍数呢？比如30，分配器就会将其自动上调为32，然后找负责32bytes的链表分配空间。需要说明的是，这里的链表节点使用了<code>union</code>类型，而不是常用的<code>struct</code>，这是因为<code>union</code>类型用在这里更节约空间。</p>
+<div class="note info"><p><code>union</code>类型比较特殊，其内部成员可以共享内存，每个<code>union</code>对象分配的内存以其最大的成员而定，这里的最大指的是<code>sizeof()</code>后最大。 </p><p>当多个基本数据类型或复合数据结构要占用同一片内存时，我们要使用联合体；当多种类型，多个对象，多个事物只取其一时（我们姑且通俗地称其为“n 选1”），我们也可以使用联合体来发挥其长处。 </p><p>这里用<code>union</code>实现的链表，每个节点包含一个指向自身类型的指针<code>next</code>和一个<code>char*</code>类型指针，那么其第一个成员<code>next</code>可以用来连接链表，而第二个成员<code>char*</code>又可以表示为一个指向实际内存区块的指针，可以用来分配给用户使用。</p></div>
+
+<p>最终第一级分配器和第二级分配器的实现也并未完全符合STL的标准，比如<code>allocate()</code>的参数就和STL要求的不一样，<code>reallocate()</code>也不是STL要求的，另外<code>allocate::construct()</code>等函数也没有实现。所以SGI还将其包装了一个接口，使分配器的<code>allocate()</code>和<code>deallocate()</code>符合STL标准，如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>, <span class="title">class</span> <span class="title">Alloc</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">class</span> <span class="title">simple_alloc</span> &#123;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> T *<span class="title">allocate</span><span class="params">(<span class="keyword">size_t</span> n)</span></span></span><br><span class="line"><span class="function">                </span>&#123; <span class="keyword">return</span> <span class="number">0</span> == n? <span class="number">0</span> : (T*) Alloc::allocate(n * <span class="keyword">sizeof</span> (T)); &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> T *<span class="title">allocate</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function">                </span>&#123; <span class="keyword">return</span> (T*) Alloc::allocate(<span class="keyword">sizeof</span> (T)); &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T *p, <span class="keyword">size_t</span> n)</span></span></span><br><span class="line"><span class="function">                </span>&#123; <span class="keyword">if</span> (<span class="number">0</span> != n) Alloc::deallocate(p, n * <span class="keyword">sizeof</span> (T)); &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T *p)</span></span></span><br><span class="line"><span class="function">                </span>&#123; Alloc::deallocate(p, <span class="keyword">sizeof</span> (T)); &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>实际上，SGI STL的源码中，第二级分配器还考虑了多线程情况，而我们的项目是以学习为目的，自然对复杂程度要有所取舍，故而在我们的实现中只考虑单线程的普通情况。</p>
+<p>接下来即是根据SGI STL源码来实现的一个不使用多线程的<code>alloc</code>模板类。在代码上仅做了极小的修改，看完了本项目的实现，也就明白了SGI的实现。</p>
+<div class="note warning"><p>为什么本节标题要强调2.91的SGI实现版本呢？因为在部分后续版本的实现中，SGI就去掉了两级分配器和memory poll的实现思想。去掉原因目前我还不知道。。。</p></div>
+
+<h2 id="2-部分考虑和相应改动"><a href="#2-部分考虑和相应改动" class="headerlink" title="2 部分考虑和相应改动"></a>2 部分考虑和相应改动</h2><p>本项目的这部分的实现思路将基本参照 SGI，仅做小部分的改动。</p>
+<p>考虑1：在SGI 的实现中，第一级分配器是一个类模板，但是却没有用到模板参数，第二级分配器也是一个类模板，第一个模板参数考虑多线程，第二个模板参数依然没用上。而在我们的实现中，不考虑多线程情况，就没有必要使用多余的模板参数了，甚至没必要使用模板。</p>
+<p>改动1：<strong>直接将两级分配器设计为两个普通类</strong>。</p>
+<p>考虑2：如上文所述，SGI 对两级分配器的包装是一个带两个参数的模板类<code>simple_alloc</code>，使用时还需要根据宏定义在第二模板参数上确定仅使用第一级分配器还是同时使用两级分配器，然后再将分配器作为模板参数放入，由于命名问题还需要为具化后的<code>simple_alloc</code>定义别名。</p>
+<p>改动2：本项目中将其包装的模板改动为<strong>一个参数的模板类</strong>，在该模板的成员函数中<strong>直接调用第二级分配器</strong>，并且为该模板<strong>补充<code>alloc::construct</code>等 STL 要求的标准接口</strong>。另外由于本项目已实现名为<code>allocator</code>的分配器，故而将本部分的分配器包装接口命名为<code>alloc</code>。</p>
+<h2 id="3-TinySTL-第一级分配器的实现"><a href="#3-TinySTL-第一级分配器的实现" class="headerlink" title="3 TinySTL 第一级分配器的实现"></a>3 TinySTL 第一级分配器的实现</h2><h3 id="3-1-接口总览"><a href="#3-1-接口总览" class="headerlink" title="3.1 接口总览"></a>3.1 接口总览</h3><p>因为第一级分配器直接使用<code>malloc()</code>来分配内存，这里将其取名为<code>malloc_alloc</code>。在 SGI 的实现中，其是一个类模板，但却并没有使用到其模板参数，所以这里直接将其设计为普通的类。先确定要实现的相应函数和成员，代码如下：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用 malloc 和 free 实现的一级分配器</span></span><br><span class="line"><span class="comment">// 可以由客端设置 OOM 时的 new_handler</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">malloc_alloc</span> &#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="comment">// 一个函数指针类型</span></span><br><span class="line">    <span class="keyword">using</span> FunPtr = <span class="keyword">void</span> (*)();</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">allocate</span><span class="params">(<span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(<span class="keyword">void</span>* ptr)</span> </span>&#123; <span class="built_in">free</span>(ptr); &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">reallocate</span><span class="params">(<span class="keyword">void</span>*, <span class="keyword">size_t</span>, <span class="keyword">size_t</span> new_sz)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> FunPtr <span class="title">set_malloc_handler</span><span class="params">(FunPtr f)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="comment">// 用于处理OOM时的辅助函数</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">oom_malloc</span><span class="params">(<span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">oom_realloc</span><span class="params">(<span class="keyword">void</span>*, <span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">    <span class="comment">// 函数指针类型的静态成员。也可以写成 FunPtr malloc_alloc_oom_handler</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="title">void</span> <span class="params">(*malloc_alloc_oom_handler)</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到<code>allocate()</code>的返回类型是<code>void</code>指针类型，这里依然是参照 SGI 的设计，<strong>让第一级和第二级分配器所分配的空间都用<code>void</code>指针类型，最后在外层包装的模板类接口上统一转换</strong>，既简单也不会影响效率。</p>
+<h3 id="3-2-allocate和deallocate的实现"><a href="#3-2-allocate和deallocate的实现" class="headerlink" title="3.2 allocate和deallocate的实现"></a>3.2 allocate和deallocate的实现</h3><p>先直接来看<code>allocate()</code>的代码实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* malloc_alloc::allocate(<span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="keyword">void</span>* result = <span class="built_in">malloc</span>(n);</span><br><span class="line">    <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">        result = malloc_alloc::oom_malloc(n);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意其仅接受一个<code>size_t</code>类型的参数<code>n</code>，先调用<code>malloc</code>来分配<strong>大小为<code>n</code>个字节（byte）的内存块</strong>。<strong>这和上篇文章中实现的<code>allocator&lt;T&gt;::allocate(size_t n)</code>不一样，其分配的是大小为<code>n * sizeof(T)</code>个字节的内存块。</strong>如果分配空间失败，则调用内部辅助函数<code>oom_malloc()</code>来继续尝试分配空间。</p>
+<div class="note info"><p><code>void* malloc(size_t n_bytes)</code>分配长度为n_bytes字节的内存块。分配成功则返回类型为<code>void</code>指向被分配内存的指针，否则返回空指针<code>NULL</code>。释放<code>malloc</code>分配的内存应使用<code>free()</code>。</p></div>
+
+<p>蓝色背景内容所述，在3.1节的代码中可以看到<code>deallocte()</code>接受一个指针，直接使用<code>free()</code>来释放内存。</p>
+<h3 id="3-3-reallocate的实现"><a href="#3-3-reallocate的实现" class="headerlink" title="3.3 reallocate的实现"></a>3.3 reallocate的实现</h3><p>其实最终对外包装的模板类中并没有使用到<code>reallocate()</code>，本着学习的态度，就顺便照着 SGI 的敲了一遍。代码实现如下：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* malloc_alloc::reallocate(<span class="keyword">void</span>* ptr, <span class="keyword">size_t</span> old_sz, <span class="keyword">size_t</span> new_sz) &#123;</span><br><span class="line">    <span class="keyword">void</span>* result = <span class="built_in">realloc</span>(ptr, new_sz);</span><br><span class="line">    <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">        result = malloc_alloc::oom_realloc(ptr, new_sz);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到跟<code>allocate()</code>相比，仅仅是换成了使用<code>realloc</code>实现</p>
+<div class="note info"><p> <code>void* realloc (void* ptr, size_t size)</code>，ptr 为需要重新分配的内存空间指针，size 为新的内存空间的大小。realloc() 对 ptr 指向的内存重新分配 size 大小的空间，size 可比原来的大或者小，还可以不变。当 malloc()、calloc() 分配的内存空间不够用时，就可以用 realloc() 来调整已分配的内存。</p><p>如果 ptr 为 NULL，它的效果和 malloc() 相同；如果 size 的值为 0，那么 ptr 指向的内存空间就会被释放，但是由于没有开辟新的内存空间，所以会返回空指针，类似于调用 free()。 </p></div>
+
+<div class="note warning"><p><code>realloc</code>接受的指针必须是动态内存空间分配成功的指针。比如不能使用<code>int* p</code>、<code>int arr[2]</code>这样的指针，会直接报错。可以说只有<code>malloc()</code>、<code>calloc()</code>、<code>realloc()</code>分配成功成功的指针才能用<code>realloc</code>。</p><p>使用<code>new_ptr=realloc(prt,n)</code>分配内存成功后，ptr绝不能再被使用，只能使用<code>new_ptr</code>。</p><p>扩大内存会复制原来内存到新地址，缩小内存会先被复制再被截取新长度。</p></div>
+
+<h3 id="3-4-new-handler机制的实现"><a href="#3-4-new-handler机制的实现" class="headerlink" title="3.4 new_handler机制的实现"></a>3.4 new_handler机制的实现</h3><p><code>new_handler</code>机制就是，当使用<code>::operator new</code>分配内存不满足需求时，可以在抛出异常之前，调用一个用户实现指定的函数来进行错误处理，这个函数就是所谓的<code>new_handle</code>。而指定这个函数的方法就是使用<code>set_new_handler()</code>，这个函数接受一个函数指针类型，返回的也是函数指针类型。</p>
+<p>由于在这里，我们使用<code>malloc</code>而不是<code>::operator new</code>来实现<code>allocate()</code>，所以我们不能直接使用C++现有的<code>new_handler</code>机制，需要我们手动来实现。</p>
+<p>实现方法也很简单，如3.1节中的代码所示，我们先在类中声明一个函数指针类型的静态成员，用来指向用户设定的函数。然后在类中声明一个成员函数，用来设定该静态成员。如代码所示。</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">malloc_alloc</span> &#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="comment">// 一个函数指针类型</span></span><br><span class="line">    <span class="keyword">using</span> FunPtr = <span class="keyword">void</span> (*)();</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    ...</span><br><span class="line">    <span class="function"><span class="keyword">static</span> FunPtr <span class="title">set_malloc_handler</span><span class="params">(FunPtr f)</span></span>;</span><br><span class="line">	...</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 函数指针类型的静态成员。也可以写成 FunPtr malloc_alloc_oom_handler</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="title">void</span> <span class="params">(*malloc_alloc_oom_handler)</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这个设定静态成员的函数即是<code>set_malloc_handler</code>，实现如下</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typename</span> malloc_alloc::FunPtr malloc_alloc::set_malloc_handler(FunPtr fptr) &#123;</span><br><span class="line">    FunPtr old = malloc_alloc_oom_handler;</span><br><span class="line">    malloc_alloc_oom_handler = fptr;</span><br><span class="line">    <span class="keyword">return</span> old;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该函数接受一个函数指针类型的参数，返回值也是一个函数指针类型。功能就是将代表<code>handler</code>的静态成员设为用户传进来的函数，最后返回原来的<code>handler</code>函数。</p>
+<p>显然上述这个代表<code>handler</code>的函数指针静态成员应该初始化为0或者<code>nullptr</code></p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> (*malloc_alloc::malloc_alloc_oom_handler)() = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-5-OOM时的处理"><a href="#3-5-OOM时的处理" class="headerlink" title="3.5 OOM时的处理"></a>3.5 OOM时的处理</h3><p>3.4节中我们已经实现了<code>new_handler</code>机制，OOM(out of memory)时就会使用到该机制，调用用户设定的函数来处理，期待可以解决内存不足的问题、或者直接输出提示信息中断程序等。</p>
+<p>在<code>allocate</code>和<code>reallocate</code>的实现可以中我们看到了，在请求分配内存失败时，也就是OOM时，将会调用两个辅助函数<code>oom_malloc</code>和<code>oom_realloc</code>。这两个函数的实现大同小异，这里先看<code>oom_malloc</code>如何实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* malloc_alloc::oom_malloc(<span class="keyword">size_t</span> n) &#123;</span><br><span class="line">	<span class="comment">// 若用户并未设定 handler 函数，则输出报错信息</span></span><br><span class="line">    <span class="keyword">if</span> (malloc_alloc_oom_handler == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cerr</span> &lt;&lt; <span class="string">"out of memory"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 否则不断尝试调用 handler 函数，然后用malloc再次请求分配内存，直到分配成功</span></span><br><span class="line">    <span class="keyword">void</span>* result;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        malloc_alloc_oom_handler();</span><br><span class="line">        result = <span class="built_in">malloc</span>(n);</span><br><span class="line">        <span class="keyword">if</span> (result)</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到函数比较简单，看注释应该就够了。下面看<code>oom_realloc</code>的实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* malloc_alloc::oom_realloc(<span class="keyword">void</span>* ptr, <span class="keyword">size_t</span> new_sz) &#123;</span><br><span class="line">	<span class="comment">// 若用户未设定 handler 函数，则输出报错信息</span></span><br><span class="line">    <span class="keyword">if</span> (malloc_alloc_oom_handler == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cerr</span> &lt;&lt; <span class="string">"out of memory"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 否则不断尝试调用 handler 函数，然后用realloc请求重新分配内存，直到分配成功</span></span><br><span class="line">    <span class="keyword">void</span>* result;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        malloc_alloc_oom_handler();</span><br><span class="line">        result = <span class="built_in">realloc</span>(ptr, new_sz);</span><br><span class="line">        <span class="keyword">if</span> (result)</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-TinySTL-第二级分配器的实现"><a href="#4-TinySTL-第二级分配器的实现" class="headerlink" title="4 TinySTL 第二级分配器的实现"></a>4 TinySTL 第二级分配器的实现</h2><p>由于在实际使用中是默认调用第二级分配器，然后第二级分配器会根据所需要的内存块大小，来决定是否调用第一级分配器，所以此处将第二级分配器命名为<code>default_alloc</code>。</p>
+<p>如1.2节所述，这里使用了内存池(memory pool)机制，用16条链表来维护16种大小的内存块，这些内存块大小是从最小8 bytes，以 8 bytes 为间隔，到最大128 bytes ；当请求的内存小于128 bytes 时，就从相应的链表里，将内存分配出去，若大于128 bytes 就调用第一级分配器。</p>
+<p>使用内存池机制的目的主要有两个：</p>
+<ul>
+<li>减少<code>malloc</code>的调用次数，因为每次调用<code>malloc</code>的时候，其实都需要时间开销去寻找可使用的内存块</li>
+<li>减少实际内存开销，因为<code>malloc</code>来分配内存的开销会比实际所需要内存更大，因为需要额外的空间来管理这一块内存；如下图所示，实际需要<code>size</code>大小的内存和最终开销的内存</li>
+</ul>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/malloc%E5%86%85%E5%AD%98.png" alt="内存管理"></p>
+<p>而这些通过链表不同大小的内存块从何而来呢？难道需要每次<code>malloc</code>这些大小不一的内存块了吗？如果这样的话，内存池的就没有意义了。</p>
+<p>我们可以一次<code>malloc</code>一大块内存，然后每次需要特定大小的内存时，从这一大块内存划拨到相应的链表，然后通过链表去分配。比如我一次<code>malloc</code>了512 bytes，然后这个时候用户请求分配 8 bytes，那我就一次划拨160 个bytes 到管理8 bytes大小内存块的链表上，此时链表有160 / 8 = 20 个节点；然后从这个20 个节点里分一个节点给用户使用。</p>
+<p>虽然第一次分配的时候看起来比较麻烦，但之后用户再要求分配 8 bytes时，我就可以直接从链表剩下的19个节点里分给他，没有必要再使用<code>malloc</code>；而用户释放 8 bytes 大小时，我就可以将这 8bytes 回收到管理的链表上。这样我只<code>malloc</code>了一次，却可以满足20次用户要求分配 8 bytes的需求。</p>
+<span class="label danger">所以我们可以这么理解，实际上第二级分配器管理的内存也有两部分，一部分是链表维护的各种大小不一的小内存，另一部分则是由`malloc`得来的大内存块，负责为链表“输血”。</span>
+
+<h3 id="4-1-接口总览"><a href="#4-1-接口总览" class="headerlink" title="4.1 接口总览"></a>4.1 接口总览</h3><p>下面是内存实现的总览：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">default_alloc</span> &#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">enum</span> &#123; ALIGN = <span class="number">8</span> &#125;;</span><br><span class="line">    <span class="keyword">enum</span> &#123; MAX_BYTES = <span class="number">128</span> &#125;;</span><br><span class="line">    <span class="keyword">enum</span> &#123; NFREELISTS = MAX_BYTES / ALIGN &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">union</span> obj &#123;</span><br><span class="line">        <span class="keyword">union</span> obj* next;</span><br><span class="line">        <span class="keyword">char</span> client_data[<span class="number">1</span>];</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">char</span>* start_free;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">char</span>* end_free;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">size_t</span> heap_size;</span><br><span class="line">    <span class="keyword">static</span> obj* <span class="keyword">volatile</span> free_list[NFREELISTS];</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> size_t <span class="title">round_up</span><span class="params">(<span class="keyword">size_t</span> bytes)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> ((bytes + ALIGN - <span class="number">1</span>) &amp; ~(ALIGN - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> size_t <span class="title">freelist_index</span><span class="params">(<span class="keyword">size_t</span> bytes)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> ((bytes + ALIGN - <span class="number">1</span>) / ALIGN - <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">refill</span><span class="params">(<span class="keyword">size_t</span> n)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">char</span>* <span class="title">chunk_alloc</span><span class="params">(<span class="keyword">size_t</span> <span class="built_in">size</span>, <span class="keyword">int</span>&amp; nobjs)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">allocate</span><span class="params">(<span class="keyword">size_t</span> n)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(<span class="keyword">void</span>* ptr, <span class="keyword">size_t</span> n)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">reallocate</span><span class="params">(<span class="keyword">void</span>* ptr, <span class="keyword">size_t</span> old_size, <span class="keyword">size_t</span> new_size)</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>首先是三个枚举类型，分别表示内存块大小的间隔、最大内存块的大小、以及所需要的维护的链表数量。声明成枚举类型主要是为了方便以后对这些值进行修改。</p>
+<p>接着一个是<code>union</code>类型，用来作为链表的节点，使用<code>union</code>的原因上文已有解释，主要是利用其成员共享内存的特点来节约内存的开销。而其第二个成员为<code>char</code>类型的原因是，<strong>个人理解</strong>是因为<code>char</code>的长度为1B，也就是8bytes，与我们最小的内存块单位相等。</p>
+<p>然后是四个静态成员。<code>start_free</code>和<code>end_free</code>就是用来管理<code>malloc</code>得到的一大块等待划拨给链表的内存块，分别表示内存块的头和尾。<code>heap_size</code>是一个和用户请求分配内存大小相关的值，用户请求的内存越多，该值就会越大，然后在用户每次用完了大内存块，而需要重新<code>malloc</code>的时候，会附加上<code>heap_size</code>的一个加权值；这样的结果就是，用户目前使用第二级分配器分配的内存块越多，下次<code>malloc</code>的时候就会分配得更多，其目的还是尽量减少<code>malloc</code>的次数。最后一个成员<code>free_list</code>就是存放16条链表的数组。</p>
+<p>注意静态成员需要初始化：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">char</span>* default_alloc::start_free = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">char</span>* default_alloc::end_free = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">size_t</span> default_alloc::heap_size = <span class="number">0</span>;</span><br><span class="line">default_alloc::obj* <span class="keyword">volatile</span> default_alloc::free_list[NFREELISTS] = &#123;</span><br><span class="line">    <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>还需要介绍两个辅助函数<code>round_up</code>和<code>freelist_index</code>。前一个是用来将传入的参数补为8的倍数，比如请求分配30 bytes 的大小时，就将30补成32。后一个参数用来确定管理内存块的链表在数组<code>free_list</code>中的索引，如传入8，就返回索引0。</p>
+<p>其余函数的作用和实现见下文。</p>
+<h3 id="4-1-allocate-的实现"><a href="#4-1-allocate-的实现" class="headerlink" title="4.1 allocate 的实现"></a>4.1 allocate 的实现</h3><p><code>allocate</code>的作用我们已经说过多次，这里不同的只是，根据请求空间的大小，找到相应的链表，然后返回链表的一个节点供用户使用。如果发现相应的链表空了，就调用<code>refill</code>来填充链表。直接看实现</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* default_alloc::allocate(<span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="comment">// 如果请求的大小超过 128 bytes就调用第一级分配器</span></span><br><span class="line">    <span class="keyword">if</span> (n &gt; <span class="number">128</span>)</span><br><span class="line">        <span class="keyword">return</span> malloc_alloc::allocate(n);</span><br><span class="line">    <span class="comment">// 否则找到相应链表，注意这是一个指向链表头指针的指针</span></span><br><span class="line">    obj* <span class="keyword">volatile</span>* my_free_list = free_list + freelist_index(n);</span><br><span class="line">    obj* result = *my_free_list;</span><br><span class="line">    <span class="comment">// 如果链表为空，就调用 refill 填充链表，refill会直接返回一个相应大小的空间供用户使用</span></span><br><span class="line">    <span class="keyword">if</span> (result == <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> refill(n);</span><br><span class="line">    <span class="comment">// 不为空则调整链表，使表头变更到下一个节点</span></span><br><span class="line">    *my_free_list = (*my_free_list)-&gt;next;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;<span class="keyword">void</span>*&gt;(result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实现比较简单，应该看上面注释就足够了，最后不进行静态转换也是可以通过编译的。</p>
+<h3 id="4-2-deallocate-的实现"><a href="#4-2-deallocate-的实现" class="headerlink" title="4.2 deallocate 的实现"></a>4.2 deallocate 的实现</h3><p>这里的<code>deallocate</code>和第一级分配器中直接<code>free</code>有所不同，也考虑两种情况：如果需要释放的内存大于128 bytes 则调用第一级分配器，否则就将其回收到相应的链表。这样的设计在最优情况下，自然可以物尽其用，链表达到“收支平衡”，不需要多次调用<code>malloc</code>。下面是实现</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> default_alloc::deallocate(<span class="keyword">void</span>* ptr, <span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="comment">// 释放空间大于128bytes调用第一级分配器</span></span><br><span class="line">    <span class="keyword">if</span> (n &gt; <span class="number">128</span>) &#123;</span><br><span class="line">        malloc_alloc::deallocate(ptr);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 否则将其回收到相应链表</span></span><br><span class="line">    obj* p = <span class="keyword">static_cast</span>&lt;obj*&gt;(ptr);</span><br><span class="line">    obj* <span class="keyword">volatile</span>* my_free_list = free_list + freelist_index(n);</span><br><span class="line">    p-&gt;next = *my_free_list;</span><br><span class="line">    *my_free_list = p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实现比较简单，无非是回收到链表时，将其插到链表表头。</p>
+<h3 id="4-3-reallocate-的实现"><a href="#4-3-reallocate-的实现" class="headerlink" title="4.3 reallocate 的实现"></a>4.3 reallocate 的实现</h3><p>第一级分配器中的<code>reallocate</code>是直接通过<code>realloc</code>实现，关于<code>realloc</code>的介绍可以看3.3节中带颜色的字体。下面直接看实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* default_alloc::reallocate(<span class="keyword">void</span>* ptr, <span class="keyword">size_t</span> old_size, <span class="keyword">size_t</span> new_size) &#123;</span><br><span class="line">    <span class="comment">// 如果新旧 size 都大于 128 bytes则使用realloc</span></span><br><span class="line">    <span class="keyword">if</span> (old_size &gt; MAX_BYTES &amp;&amp; new_size &gt; MAX_BYTES)</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">realloc</span>(ptr, new_size);</span><br><span class="line">    <span class="comment">// 否则看是不是在同一个小内存区间，是的话没必要操作</span></span><br><span class="line">    <span class="keyword">if</span> (round_up(old_size) == round_up(new_size))</span><br><span class="line">        <span class="keyword">return</span> ptr;</span><br><span class="line">    <span class="comment">// 都不是的话，需要模拟一下ralloc的操作</span></span><br><span class="line">    <span class="comment">// 开辟新内存，复制原来的部分，最后释放原内存</span></span><br><span class="line">    <span class="keyword">void</span>* result = allocate(new_size);</span><br><span class="line">    <span class="keyword">size_t</span> copy_sz = new_size &gt; old_size ? new_size : old_size;</span><br><span class="line">    <span class="built_in">memcpy</span>(result, ptr, copy_sz);</span><br><span class="line">    deallocate(ptr, old_size);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>内存管理，肯定要秉承谁分配的谁释放的原则。</p>
+<p>显然大于128 bytes的话，说明该内存并不是第二级分配器分配的，让他找第一级分配器去。</p>
+<p>如果确定是由第二级分配器分配的，就看看新要求的空间大小<code>new_size</code>跟原来的大小<code>old_size</code>在不在一个内存区间上，比如<code>old_size</code>是20 bytes，<code>new_size</code>是24 bytes，都在(16,24]区间里；因为分配的时候，如果要求 20 bytes，实际还是会给24 bytes，所以其实此时内存大小是满足需求的，直接用原来的就行，没必要操作。</p>
+<p>排除以上情况以外，就需要新开辟一块大小为<code>new_size</code>，然后将原来的部分复制过来，复制部分肯定是不会超过原来的大小，也不会超过新长度，反正就是谁小取谁；最后还要记得释放原来的内存，调用<code>deallocate</code>即可。</p>
+<h3 id="4-4-refill-的实现"><a href="#4-4-refill-的实现" class="headerlink" title="4.4 refill 的实现"></a>4.4 refill 的实现</h3><p>在<code>allocate</code>函数中，当对应所需内存大小的链表为空时，需要调用<code>refill</code>来为用户提供内存，除此以外，<code>refill</code>还会为填充对应链表，在下次请求相同大小内存时，就可以直接从链表中取了。下面是其实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* default_alloc::refill(<span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="comment">// 设定请求相应小内存块节点的个数</span></span><br><span class="line">    <span class="keyword">int</span> nobjs = <span class="number">20</span>;</span><br><span class="line">    <span class="comment">// chunk_alloc会从大内存块中划拨相应大小的内存供其使用</span></span><br><span class="line">    <span class="comment">// 这里nobjs是传引用，会修改nobjs的值告知实际返回多少个节点</span></span><br><span class="line">    <span class="keyword">char</span>* chunk = chunk_alloc(n, nobjs);</span><br><span class="line">    <span class="comment">// 如果只返回了1个节点大小的空间，则直接提供给用户使用</span></span><br><span class="line">    <span class="keyword">if</span> (nobjs == <span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;<span class="keyword">void</span>*&gt;(chunk);</span><br><span class="line">    <span class="comment">// 多于1个节点则将剩下节点填充到相应链表</span></span><br><span class="line">    <span class="keyword">void</span>* result = <span class="keyword">static_cast</span>&lt;<span class="keyword">void</span>*&gt;(chunk);</span><br><span class="line">    obj *next_obj, *current_obj;</span><br><span class="line">    obj* <span class="keyword">volatile</span>* my_free_list = free_list + freelist_index(n);</span><br><span class="line">    *my_free_list = next_obj = (obj*)(chunk + n);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>;; ++i) &#123;</span><br><span class="line">        current_obj = next_obj;</span><br><span class="line">        next_obj = (obj*)((<span class="keyword">char</span>*)next_obj + n);</span><br><span class="line">        <span class="keyword">if</span> (nobjs - <span class="number">1</span> == i) &#123;</span><br><span class="line">            current_obj-&gt;next = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span></span><br><span class="line">            current_obj-&gt;next = next_obj;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实际实现并不复杂，可以看到，当对应的链表为空的时候，默认会请求20个节点的大小，比如这个链表管理的是64 bytes的大小，那么就会向大内存块请求 20 * 64 bytes的空间，然后将其中的19个放到链表中，留1一个直接返回给用户使用（<code>allocate</code>中对<code>refill</code>的调用）。</p>
+<p>值得说明的是，<code>chunk_alloc</code>函数会根据现有的大内存块的大小，来决定实际返回的个数，并通过传引用<code>objs</code>参数对其修改，达到告知的目的。接上面的例子，比如现在大内存块中只有64 bytes的大小了，那么<code>chunk_alloc</code>就会只返回64 bytes，解解燃眉之急，然后修改objs的值为1，当然要是有128 bytes，那就返回2个；但是如果大内存块里连64 bytes的大小都没了，就会<code>malloc</code>一次，取得足够大的空间，返回20个。具体实现见下一节。</p>
+<h3 id="4-5-chunk-alloc-的实现"><a href="#4-5-chunk-alloc-的实现" class="headerlink" title="4.5 chunk_alloc 的实现"></a>4.5 chunk_alloc 的实现</h3><p>如4.4节所述，<code>chunk_alloc</code>函数作用就是在链表的内存需要补充时，从大内存块中划拨一部分内存给<code>refill</code>使用，若是大内存块不够用了，就<code>malloc</code>一大块内存，保证满足当前的需求之外，还能留着用。先直接看实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">char</span>* default_alloc::chunk_alloc(<span class="keyword">size_t</span> <span class="built_in">size</span>, <span class="keyword">int</span>&amp; nobjs) &#123;</span><br><span class="line">    <span class="keyword">char</span>* result;</span><br><span class="line">    <span class="keyword">size_t</span> total_bytes = <span class="built_in">size</span> * nobjs;</span><br><span class="line">    <span class="keyword">size_t</span> bytes_left = end_free - start_free;</span><br><span class="line">    <span class="comment">// 若原本的大内存块剩下的空间能够满足需求，直接划拨</span></span><br><span class="line">    <span class="keyword">if</span> (bytes_left &gt;= total_bytes) &#123;</span><br><span class="line">        result = start_free;</span><br><span class="line">        start_free += total_bytes;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 若剩下的内存能够提供至少1个节点大小，则尽可能划拨</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (bytes_left &gt;= <span class="built_in">size</span>) &#123;</span><br><span class="line">        nobjs = bytes_left / <span class="built_in">size</span>;</span><br><span class="line">        result = start_free;</span><br><span class="line">        start_free += nobjs * <span class="built_in">size</span>;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">// 否则使用malloc请求（当前需求*2+历史需求/16）的大小</span></span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">size_t</span> bytes_to_get = <span class="number">2</span> * total_bytes + round_up(heap_size &gt;&gt; <span class="number">4</span>);</span><br><span class="line">        <span class="comment">// 检查目前剩下的空间够不够划拨给其他更小内存块的链表</span></span><br><span class="line">        <span class="keyword">if</span> (bytes_left &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            obj* <span class="keyword">volatile</span>* my_free_list =</span><br><span class="line">                free_list + freelist_index(bytes_left);</span><br><span class="line">            ((obj*)start_free)-&gt;next = *my_free_list;</span><br><span class="line">            *my_free_list = (obj*)start_free;</span><br><span class="line">        &#125;</span><br><span class="line">        start_free = (<span class="keyword">char</span>*)<span class="built_in">malloc</span>(bytes_to_get);</span><br><span class="line">        <span class="comment">// malloc失败的话，从更大内存块的链表寻求空间，并将剩下空间放到大内存块中</span></span><br><span class="line">        <span class="keyword">if</span> (start_free == <span class="number">0</span>) &#123;</span><br><span class="line">            obj* <span class="keyword">volatile</span>* my_free_list;</span><br><span class="line">            obj* ptr = *my_free_list;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="built_in">size</span>; i &lt;= MAX_BYTES; i += ALIGN) &#123;</span><br><span class="line">                my_free_list = free_list + freelist_index(i);</span><br><span class="line">                ptr = *my_free_list;</span><br><span class="line">                <span class="keyword">if</span> (ptr != <span class="number">0</span>) &#123;</span><br><span class="line">                    *my_free_list = ptr-&gt;next;</span><br><span class="line">                    start_free = (<span class="keyword">char</span>*)ptr;</span><br><span class="line">                    end_free = start_free + i;</span><br><span class="line">                    <span class="keyword">return</span> chunk_alloc(<span class="built_in">size</span>, nobjs);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 更大链表也没有空间了，试试第一级分配器的new_handler机制</span></span><br><span class="line">            end_free = <span class="number">0</span>;</span><br><span class="line">            start_free = (<span class="keyword">char</span>*)malloc_alloc::allocate(bytes_to_get);</span><br><span class="line">        &#125;</span><br><span class="line">        heap_size += bytes_to_get;</span><br><span class="line">        end_free = start_free + bytes_to_get;</span><br><span class="line">        <span class="comment">// malloc成功,递归调用自己向refill划拨空间</span></span><br><span class="line">        <span class="keyword">return</span> chunk_alloc(<span class="built_in">size</span>, nobjs);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实现逻辑并不复杂：当大内存块的空间够分配1个以上节点的时候，会尽可能地满足需求，划拨空间；当内存完全不够的时候就<code>malloc</code>一大块。</p>
+<p>值得一说的是，当<code>malloc</code>失败的时候设计非常细致，可以做到对已有内存充分利用，没有丝毫浪费。首先使用<code>malloc</code>前就先检查，剩下的空间够不够分配给其他更小的链表，物尽其用；然后如果<code>malloc</code>成功了，皆大欢喜，再次递归地调用自己，向链表(实际为<code>refill</code>函数)划拨空间；如果<code>malloc</code>失败了，先检查其他管理更大内存块的链表中有没有空间可以使用，可以的话，先拿一个节点来用，并且这个节点剩下还得放回大内存块，如果这些链表都空了，那就调用第一级分配器，毕竟第一级分配器还实现了<code>new_handler</code>机制，也许能派上用场。</p>
+<h2 id="5-TinySTL-类模板alloc的包装"><a href="#5-TinySTL-类模板alloc的包装" class="headerlink" title="5 TinySTL 类模板alloc的包装"></a>5 TinySTL 类模板alloc的包装</h2><p>在第3节和第4节实现的两级分配器，只是两个普通类，并且接口不符合STL要求。所以需要用一个类模板对其包装，过程也很简单，顺便也为其实现了<code>construct</code>、<code>destroy</code>、<code>address</code>、<code>max_size</code>、<code>rebind</code>接口，其实现与<a href="https://choubin.site/2020/01/02/STL2-AlloctorAndCtorDtor/" target="_blank" rel="noopener">上篇文章</a>中<code>allocator</code>的实现基本一致。下面是其部分实现：</p>
+<figure class="highlight c++"><figcaption><span>alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SGI STL 特色分配器，需要一个模板参数，具有 STL 标准接口</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">alloc</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// STL 要求的类型别名定义</span></span><br><span class="line">    <span class="keyword">using</span> value_type        = T;</span><br><span class="line">    <span class="keyword">using</span> pointer           = T*;</span><br><span class="line">    <span class="keyword">using</span> const_pointer     = <span class="keyword">const</span> T*;</span><br><span class="line">    <span class="keyword">using</span> reference         = T&amp;;</span><br><span class="line">    <span class="keyword">using</span> const_reference   = <span class="keyword">const</span> T&amp;;</span><br><span class="line">    <span class="keyword">using</span> size_type         = <span class="keyword">size_t</span>;</span><br><span class="line">    <span class="keyword">using</span> difference_type   = <span class="keyword">ptrdiff_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// STL 要求的类接口，使用静态函数实现可以使频繁调用下减小开销</span></span><br><span class="line">    <span class="comment">// 负责分配内存</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> T* <span class="title">allocate</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> T* <span class="title">allocate</span><span class="params">(size_type n)</span></span>;</span><br><span class="line">    <span class="comment">// 负责释放内存</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T*, size_type n)</span></span>;</span><br><span class="line">    <span class="comment">// 负责构造对象</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr, <span class="keyword">const</span> T&amp; value)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr, T&amp;&amp; value)</span></span>;</span><br><span class="line">    <span class="comment">// 负责析构对象</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* first, T* last)</span></span>;</span><br><span class="line">    <span class="comment">// 获取某对象的地址</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> T* <span class="title">address</span><span class="params">(T&amp; val)</span></span>;</span><br><span class="line">    <span class="comment">// 获取可配置T类型对象的最大数目</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> size_t <span class="title">max_size</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="comment">// 使T类型的alloctor可以为U类型的对象分配内存</span></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebind</span> &#123;</span></span><br><span class="line">        <span class="keyword">using</span> other = alloc&lt;U&gt;;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">T* alloc&lt;T&gt;::allocate(<span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="keyword">return</span> n == <span class="number">0</span> ? <span class="number">0</span> : <span class="keyword">static_cast</span>&lt;T*&gt;(default_alloc::allocate(n * <span class="keyword">sizeof</span>(T)));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">T* alloc&lt;T&gt;::allocate() &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;T*&gt;(default_alloc::allocate(<span class="keyword">sizeof</span>(T)));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> alloc&lt;T&gt;::deallocate(T* ptr, <span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="keyword">if</span> (n != <span class="number">0</span>)</span><br><span class="line">        default_alloc::deallocate((<span class="keyword">void</span>*)ptr, n * <span class="keyword">sizeof</span>(T));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> alloc&lt;T&gt;::deallocate(T* ptr) &#123;</span><br><span class="line">    <span class="keyword">if</span> (ptr)</span><br><span class="line">        default_alloc::deallocate((<span class="keyword">void</span>*)ptr, <span class="keyword">sizeof</span>(T));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于其他接口的函数实现与<a href="https://choubin.site/2020/01/02/STL2-AlloctorAndCtorDtor/" target="_blank" rel="noopener">上篇文章</a>中的完全一致，所以就不放上来了，<strong>完整代码</strong>可以参见<a href="https://github.com/Lammmmmmm/TinySTL/blob/master/alloc.h" target="_blank" rel="noopener">我的github项目里的alloc.h</a>。</p>
+<h2 id="6-简单的性能分析和测试"><a href="#6-简单的性能分析和测试" class="headerlink" title="6 简单的性能分析和测试"></a>6 简单的性能分析和测试</h2><p>包括上篇文章中的<code>allocator</code>，目前在 TinySTL 项目中我们已经实现了两种分配器，但尚未实现容器，所以我们可以先使用 STL 库中现有的容器对两种分配器做个小测试，对其性能做个对比。</p>
+<p>由于<code>vector</code>容器每次使用分配器请求空间的时候，会请求现在长度的两倍，比如<code>vector&lt;int&gt;</code>，一个<code>int</code>在一般的机器上面长度是4B，即32bytes，当<code>vector&lt;int&gt;</code>原来长度等于5时，再次扩容长度就会变成10，一次就请求了<code>5*32=160bytes</code>，这之后再插入数据已经不会再调用第二级分配器了。</p>
+<p>因此，如果向<code>vector&lt;int&gt;</code>中插入1000000个数，无非就是<code>operator new</code>和<code>malloc</code>的差距，然而实际上<code>operator new</code>就是用<code>malloc</code>实现的，所以性能差别不大。</p>
+<p>所以，我们可以使用<code>list&lt;int&gt;</code>来对两种分配器进行测试，因为<code>list</code>内部就是个双向链表，每插一个<code>int</code>类型就会调用分配器请求一个32bytes的大小。测试代码如下</p>
+<figure class="highlight c++"><figcaption><span>test_alloc.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> &#123; NUMBERS = <span class="number">10000000</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">test_alloc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// test of list</span></span><br><span class="line">    <span class="comment">// test of push_back</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">int</span>&gt; list1; <span class="comment">// std 默认分配器</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">int</span>, mystl::allocator&lt;<span class="keyword">int</span>&gt;&gt; list2;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">int</span>, mystl::alloc&lt;<span class="keyword">int</span>&gt;&gt; list3;</span><br><span class="line">    <span class="keyword">clock_t</span> start = clock();</span><br><span class="line">    <span class="comment">// srand(time(NULL));</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; NUMBERS; ++i)</span><br><span class="line">        list1.push_back(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">clock_t</span> <span class="built_in">end</span> = clock();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"Time to insert "</span> &lt;&lt; NUMBERS</span><br><span class="line">         &lt;&lt; <span class="string">" numbers in list with STL alloctor: "</span></span><br><span class="line">         &lt;&lt; <span class="built_in">end</span> - start &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    start = clock();</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; NUMBERS; ++i)</span><br><span class="line">        list2.push_back(<span class="number">1</span>);</span><br><span class="line">    <span class="built_in">end</span> = clock();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"Time to insert "</span> &lt;&lt; NUMBERS</span><br><span class="line">         &lt;&lt; <span class="string">" numbers in list with mystl alloctor: "</span></span><br><span class="line">         &lt;&lt; <span class="built_in">end</span> - start &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    start = clock();</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; NUMBERS; ++i)</span><br><span class="line">        list3.push_back(<span class="number">1</span>);</span><br><span class="line">    <span class="built_in">end</span> = clock();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"Time to insert "</span> &lt;&lt; NUMBERS</span><br><span class="line">         &lt;&lt; <span class="string">" numbers in list with mystl SGI alloc: "</span></span><br><span class="line">         &lt;&lt; <span class="built_in">end</span> - start &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>本来打算插入随机数的，想了想觉得没必要，还浪费调用<code>rand()</code>的时间，万一每次<code>rand()</code>的计算时间还不一样就不够客观了。所以直接插入1。在我的环境下跑了3次的结果如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with STL alloctor: 1093750</span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with mystl alloctor: 1078125</span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with mystl SGI alloc: 921875</span><br><span class="line"></span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with STL alloctor: 1140625</span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with mystl alloctor: 1109375</span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with mystl SGI alloc: 921875</span><br><span class="line"></span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with STL alloctor: 1187500</span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with mystl alloctor: 1359375</span><br><span class="line">Time to insert 10000000 numbers <span class="keyword">in</span> list with mystl SGI alloc: 1140625</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在以上的测试用例中，本篇文章中实现的<code>alloc</code>分配器性能不仅比上篇文章中的<code>allocator</code>强，甚至比STL默认的分配器表现得还要好。这其实也很正常，毕竟人家STL默认的分配器需要考虑各种情况下的性能，其覆盖的测试用例和测试场景海了去了，平均性能必然是没法比的，毕竟我们参照的是20年前的代码了。。。</p>
+<p>关于分配器的实现，已经告一段落，接下来将开始准备重头戏容器的实现。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+      <div>
+        <div>
+  
+    <div style="text-align:center;color:#bfbfbf;font-size:16px;">
+      <span>-------- 本文结束 </span>
+      <i class="fa fa-paw"></i>
+      <span> 感谢阅读 --------</span>
+    </div>
+  
+</div>
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>给我加块红烧肉吧</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.jpg" alt="Chou Bin 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Chou Bin 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <!-- JS库 clipboard 拷贝内容到粘贴板-->
+<script src="https://cdn.bootcss.com/clipboard.js/2.0.1/clipboard.min.js"></script>
+
+<!-- JS库 sweetalert 显示提示信息-->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<ul class="post-copyright">
+  <!-- 本文标题 -->
+  <li>
+    <strong>本文标题： </strong>
+    TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类
+  </li>
+
+  <!-- 本文作者 -->
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>
+    Chou Bin
+  </li>
+
+  <!-- 创建时间 -->
+  <li>
+    <strong>创建时间： </strong>
+    2020年01月07日 - 00时01分
+  </li>
+
+  <!-- 修改时间 -->
+  <li>
+    <strong>修改时间： </strong>
+    2020年01月07日 - 00时01分
+  </li>
+
+  <!-- 引用链接 -->
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/" title="TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类"
+      >http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/</a
+    >
+    <span class="copy-path" title="点击复制引用链接"
+      ><i
+        style="cursor: pointer"
+        class="fa fa-clipboard"
+        data-clipboard-text="[Chou Bin's Blog | TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类](http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/)"
+        aria-label="复制成功"
+      ></i
+    ></span>
+  </li>
+
+  <!-- 版权声明 -->
+  <li class="post-copyright-license">
+    <strong
+      >版权声明：
+    </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+<script>
+  var clipboard = new ClipboardJS(".fa-clipboard");
+  clipboard.on("success", function(target) {
+    var message = document.createElement("div");
+    message.innerHTML =
+      '<i class="fa fa-check-circle message-icon"></i><span class="message-content">' +
+      target.trigger.getAttribute("aria-label") +
+      "</span>";
+    swal({
+      content: message,
+      className: "copy-success-message",
+      timer: 1000,
+      button: false
+    });
+  });
+</script>
+      </div>
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+        <div class="post-widgets">
+        
+          <div class="wp_rating">
+            <div id="wpac-rating"></div>
+          </div>
+        
+
+        
+
+        
+        </div>
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/01/02/STL2-AlloctorAndCtorDtor/" rel="next" title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
+                TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <a href="/">
+                <img class="site-author-image" itemprop="image"
+                  src="/images/avatar.jpg"
+                  alt="Chou Bin" />
+              </a>
+            
+              <p class="site-author-name" itemprop="name">Chou Bin</p>
+              <p class="site-description motion-element" itemprop="description">慢就是快，快就是慢</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/lammmmmmm" target="_blank" title="GitHub" rel="external nofollow"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:ozc236@163.com" target="_blank" title="E-Mail" rel="external nofollow"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://weibo.com/3817442698" target="_blank" title="Weibo" rel="external nofollow"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+            <div class="cc-license motion-element" itemprop="license">
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" target="_blank" rel="external nofollow">
+                <img src="/images/cc-by-nc-sa.svg" alt="Creative Commons" />
+              </a>
+            </div>
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://lesylin.com" title="Lesy" target="_blank">Lesy</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-SGI-STL-2-91-中空间分配器alloc的设计思想"><span class="nav-text">1 SGI STL 2.91 中空间分配器alloc的设计思想</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-SGI-的第一级分配器"><span class="nav-text">1.1 SGI 的第一级分配器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-SGI-的第二级分配器"><span class="nav-text">1.2 SGI 的第二级分配器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-部分考虑和相应改动"><span class="nav-text">2 部分考虑和相应改动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-TinySTL-第一级分配器的实现"><span class="nav-text">3 TinySTL 第一级分配器的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-接口总览"><span class="nav-text">3.1 接口总览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-allocate和deallocate的实现"><span class="nav-text">3.2 allocate和deallocate的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-reallocate的实现"><span class="nav-text">3.3 reallocate的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-new-handler机制的实现"><span class="nav-text">3.4 new_handler机制的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-5-OOM时的处理"><span class="nav-text">3.5 OOM时的处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-TinySTL-第二级分配器的实现"><span class="nav-text">4 TinySTL 第二级分配器的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-接口总览"><span class="nav-text">4.1 接口总览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-allocate-的实现"><span class="nav-text">4.1 allocate 的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-deallocate-的实现"><span class="nav-text">4.2 deallocate 的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-reallocate-的实现"><span class="nav-text">4.3 reallocate 的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-refill-的实现"><span class="nav-text">4.4 refill 的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-chunk-alloc-的实现"><span class="nav-text">4.5 chunk_alloc 的实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-TinySTL-类模板alloc的包装"><span class="nav-text">5 TinySTL 类模板alloc的包装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-简单的性能分析和测试"><span class="nav-text">6 简单的性能分析和测试</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script
+  async
+  src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"
+></script>
+<div class="copyright">&copy; 2019 – <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Chou Bin</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点总字数：</span>
+    
+    <span title="站点总字数">61k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    
+    <span title="站点阅读时长">1:42</span>
+  
+</div>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      你是小破站的第 <span class="busuanzi-value" id="busuanzi_value_site_uv"></span> 为访客
+    </span>
+  
+
+  
+    <span class="site-pv">
+      历经 <span class="busuanzi-value" id="busuanzi_value_site_pv"></span> 次回眸才与你相遇
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  
+  
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(function (item) {
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz',
+        appKey: 'rr9HWuw87tMKsDi665PptoeR',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        meta:guest,
+        pageSize:'10' || 10,
+        visitor: false
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('body');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('3');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz",
+                'X-LC-Key': "rr9HWuw87tMKsDi665PptoeR",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+  
+  <script type="text/javascript">
+  wpac_init = window.wpac_init || [];
+  wpac_init.push({widget: 'Rating', id: 22562,
+    el: 'wpac-rating',
+    color: 'fadb14'
+  });
+  (function() {
+    if ('WIDGETPACK_LOADED' in window) return;
+    WIDGETPACK_LOADED = true;
+    var mc = document.createElement('script');
+    mc.type = 'text/javascript';
+    mc.async = true;
+    mc.src = '//embed.widgetpack.com/widget.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+  })();
+  </script>
+
+
+  
+  
+  
+  <script src="/lib/pangu/dist/pangu.min.js?v=3.3"></script>
+  <script type="text/javascript">pangu.spacingPage();</script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+  <script async src="/js/cursor/fireworks.js"></script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+
+
+ 
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-precise-range-plugin@1.3.0/moment-precise-range.min.js"></script>
+<script>
+  function timer() {
+    var ages = moment.preciseDiff(moment(),moment(20191221,"YYYYMMDD"));
+    ages = ages.replace(/years?/, "年");
+    ages = ages.replace(/months?/, "月");
+    ages = ages.replace(/days?/, "天");
+    ages = ages.replace(/hours?/, "小时");
+    ages = ages.replace(/minutes?/, "分");
+    ages = ages.replace(/seconds?/, "秒");
+    ages = ages.replace(/\d+/g, '<span style="color:#1890ff">$&</span>');
+    div.innerHTML = `我已在此等候你 ${ages}`;
+  }
+  var div = document.createElement("div");
+  //插入到copyright之后
+  var copyright = document.querySelector(".copyright");
+  document.querySelector(".footer-inner").insertBefore(div, copyright.nextSibling);
+  timer();
+  setInterval("timer()",1000)
+</script>
+
+
+ 
+<script>
+  var OriginTitile = document.title;
+  var titleTime;
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      document.title = "(つェ⊂) 看不见我看不见我~" + OriginTitile;
+      clearTimeout(titleTime);
+    } else {
+      document.title = "(*´∇｀*) 咦，被你发现了~" + OriginTitile;
+      titleTime = setTimeout(function() {
+        document.title = OriginTitile;
+      }, 2000);
+    }
+  });
+</script>
+
+</body>
+</html>
+
+
+
+  <script src="/js/wobblewindow.js"></script>
+  <script>
+    //只在桌面版网页启用特效
+    if( window.innerWidth > 768  ){
+      $(document).ready(function () {
+        
+          $('#header').wobbleWindow({
+            radius: 65,
+            movementTop: false,
+            movementLeft: false,
+            movementRight: false,
+            debug: false,
+          });
+        
+
+        
+
+        
+          $('#footer').wobbleWindow({
+            radius: 65,
+            movementBottom: false,
+            movementLeft: false,
+            movementRight: false,
+            position: 'absolute',
+            debug: false,
+          });
+        
+      });
+    }
+  </script>
