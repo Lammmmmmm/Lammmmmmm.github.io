@@ -289,7 +289,7 @@
       </tags>
   </entry>
   <entry>
-    <title>TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类</title>
+    <title>TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类</title>
     <url>/2020/01/07/STL3-SGI2StageAllocator/</url>
     <content><![CDATA[<h2 id="1-SGI-STL-2-91-中空间分配器alloc的设计思想"><a href="#1-SGI-STL-2-91-中空间分配器alloc的设计思想" class="headerlink" title="1 SGI STL 2.91 中空间分配器alloc的设计思想"></a>1 SGI STL 2.91 中空间分配器alloc的设计思想</h2><p>在<a href="https://choubin.site/2020/01/02/STL2-AlloctorAndCtorDtor/" target="_blank" rel="noopener">上篇文章</a>中，我们实现了使用<code>::operator new</code>和<code>::operator delete</code>来分配、释放内存的空间分配器<code>allocator</code>模板类。但在SGI STL 2.91版的源码实现中，其使用的空间分配器并非如此简单，而是以更底层的<code>malloc()</code>、<code>free()</code>来分配、释放内存，其设计哲学在《STL源码剖析》中总结如下：</p>
 <div class="note info"><ul><li>向 system heap 要求空间</li><li>考虑多线程状态</li><li>考虑内存不足时的应变措施</li><li>考虑过多小型区块可能造成的<strong>内存碎片（fragment）</strong>问题</li></ul></div>

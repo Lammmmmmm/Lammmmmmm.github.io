@@ -153,14 +153,14 @@
 
   <meta name="description" content="1 SGI STL 2.91 中空间分配器alloc的设计思想在上篇文章中，我们实现了使用::operator new和::operator delete来分配、释放内存的空间分配器allocator模板类。但在SGI STL 2.91版的源码实现中，其使用的空间分配器并非如此简单，而是以更底层的malloc()、free()来分配、释放内存，其设计哲学在《STL源码剖析》中总结如下： 向 sys">
 <meta property="og:type" content="article">
-<meta property="og:title" content="TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类">
+<meta property="og:title" content="TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类">
 <meta property="og:url" content="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/index.html">
 <meta property="og:site_name" content="Chou Bin&#39;s Blog">
 <meta property="og:description" content="1 SGI STL 2.91 中空间分配器alloc的设计思想在上篇文章中，我们实现了使用::operator new和::operator delete来分配、释放内存的空间分配器allocator模板类。但在SGI STL 2.91版的源码实现中，其使用的空间分配器并非如此简单，而是以更底层的malloc()、free()来分配、释放内存，其设计哲学在《STL源码剖析》中总结如下： 向 sys">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/malloc%E5%86%85%E5%AD%98.png">
 <meta property="article:published_time" content="2020-01-06T16:11:55.810Z">
-<meta property="article:modified_time" content="2020-02-14T05:13:40.728Z">
+<meta property="article:modified_time" content="2020-02-14T05:20:56.451Z">
 <meta property="article:author" content="Chou Bin">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="STL">
@@ -182,7 +182,7 @@
   };
 </script>
 
-  <title>TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类 | Chou Bin's Blog</title>
+  <title>TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类 | Chou Bin's Blog</title>
   
 
 
@@ -407,7 +407,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类
+          <h2 class="post-title" itemprop="name headline">TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类
               
             
           </h2>
@@ -481,7 +481,7 @@
 
           
           
-             <span id="/2020/01/07/STL3-SGI2StageAllocator/" class="leancloud_visitors" data-flag-title="TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类">
+             <span id="/2020/01/07/STL3-SGI2StageAllocator/" class="leancloud_visitors" data-flag-title="TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -780,7 +780,7 @@
   <!-- 本文标题 -->
   <li>
     <strong>本文标题： </strong>
-    TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类
+    TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类
   </li>
 
   <!-- 本文作者 -->
@@ -804,14 +804,14 @@
   <!-- 引用链接 -->
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/" title="TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类"
+    <a href="http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/" title="TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类"
       >http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/</a
     >
     <span class="copy-path" title="点击复制引用链接"
       ><i
         style="cursor: pointer"
         class="fa fa-clipboard"
-        data-clipboard-text="[Chou Bin's Blog | TinySTL 实现项目（三）：具有SGI特色的两级分配器alloc模板类](http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/)"
+        data-clipboard-text="[Chou Bin's Blog | TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类](http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/)"
         aria-label="复制成功"
       ></i
     ></span>
