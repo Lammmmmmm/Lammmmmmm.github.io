@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/</loc>
+    
+    <lastmod>2020-02-14T05:13:40.728Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2020/02/13/unp-01/</loc>
     
     <lastmod>2020-02-13T14:10:16.382Z</lastmod>
@@ -12,13 +19,6 @@
     <loc>http://yoursite.com/2020/02/13/STL4-IteratorAndInitTool/</loc>
     
     <lastmod>2020-02-13T08:49:38.599Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/</loc>
-    
-    <lastmod>2020-02-06T07:25:28.511Z</lastmod>
     
   </url>
   

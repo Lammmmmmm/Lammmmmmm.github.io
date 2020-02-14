@@ -428,6 +428,14 @@
 <p>可以看到，在以上的测试用例中，本篇文章中实现的<code>alloc</code>分配器性能不仅比上篇文章中的<code>allocator</code>强，甚至比STL默认的分配器表现得还要好。这其实也很正常，毕竟人家STL默认的分配器需要考虑各种情况下的性能，其覆盖的测试用例和测试场景海了去了，平均性能必然是没法比的，毕竟我们参照的是20年前的代码了。。。</p>
 <p>关于分配器的实现，已经告一段落，接下来将开始准备重头戏容器的实现。</p>
 ]]></content>
+      <categories>
+        <category>C++</category>
+        <category>STL</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>STL</tag>
+      </tags>
   </entry>
   <entry>
     <title>TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy</title>
