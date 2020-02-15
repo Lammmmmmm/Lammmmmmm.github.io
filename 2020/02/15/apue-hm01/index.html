@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/favicon16.png?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="程序编译方法和 gdb 调试技巧，严格来说不应该算作 Linux 系统编程的内容，但 Linux 系统编程主要使用 C 语言进行，离不开程序编译、调试的基础，所以将这部分知识作为第一部分的入门知识。 在此仅仅对我所学到的做一个粗略简单的总结。 1 编译基本过程C&#x2F;C++ 程序编译主要有四个步骤  预处理：由预处理器完成，生成.i文件；主要做些代码文本替换工作，如展开头文件、展开宏、处理条件编译过滤">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 系统编程（一）：C&#x2F;C++程序编译与gdb调试">
+<meta property="og:url" content="http://yoursite.com/2020/02/15/apue-hm01/index.html">
+<meta property="og:site_name" content="Chou Bin&#39;s Blog">
+<meta property="og:description" content="程序编译方法和 gdb 调试技巧，严格来说不应该算作 Linux 系统编程的内容，但 Linux 系统编程主要使用 C 语言进行，离不开程序编译、调试的基础，所以将这部分知识作为第一部分的入门知识。 在此仅仅对我所学到的做一个粗略简单的总结。 1 编译基本过程C&#x2F;C++ 程序编译主要有四个步骤  预处理：由预处理器完成，生成.i文件；主要做些代码文本替换工作，如展开头文件、展开宏、处理条件编译过滤">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-15T12:51:31.863Z">
+<meta property="article:modified_time" content="2020-02-15T12:51:16.880Z">
+<meta property="article:author" content="Chou Bin">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="GDB">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/15/apue-hm01/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Linux 系统编程（一）：C/C++程序编译与gdb调试 | Chou Bin's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Chou Bin's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-top">
+    <a href="/top/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-signal"></i> <br />热度榜</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/15/apue-hm01/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Chou Bin">
+      <meta itemprop="description" content="慢就是快，快就是慢">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Chou Bin's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Linux 系统编程（一）：C/C++程序编译与gdb调试
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-15 20:51:31" itemprop="dateCreated datePublished" datetime="2020-02-15T20:51:31+08:00">2020-02-15</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a></span>
+
+                
+                
+                  ，
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Linux系统编程</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/02/15/apue-hm01/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/02/15/apue-hm01/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2020/02/15/apue-hm01/" class="leancloud_visitors" data-flag-title="Linux 系统编程（一）：C/C++程序编译与gdb调试">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">热度 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+                 <span>℃</span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">65k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">1:49</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>程序编译方法和 gdb 调试技巧，严格来说不应该算作 Linux 系统编程的内容，但 Linux 系统编程主要使用 C 语言进行，离不开程序编译、调试的基础，所以将这部分知识作为第一部分的入门知识。</p>
+<p>在此仅仅对我所学到的做一个粗略简单的总结。</p>
+<h2 id="1-编译基本过程"><a href="#1-编译基本过程" class="headerlink" title="1 编译基本过程"></a>1 编译基本过程</h2><p>C/C++ 程序编译主要有四个步骤</p>
+<ul>
+<li>预处理：由预处理器完成，生成<code>.i</code>文件；主要做些代码文本替换工作，如展开头文件、展开宏、处理条件编译过滤不必要代码，过滤注释，添加行号和文件名标识，保留<code>#pragma</code>指令，该指令由编译器处理；</li>
+<li>编译：由编译器完成，生成<code>.s</code>文件；进行语法、词法分析，检查是否有错，并且根据编译器的不同还会对代码进行不同的优化，在 gcc 中优化的级别可以设定，最后翻译成汇编语言；</li>
+<li>汇编：由汇编器完成，生成<code>.o</code>文件；将汇编语言翻译成目标机器指令，目标文件由段组成，至少包含代码段和数据段；</li>
+<li>链接：由链接器完成，一般生成<code>.out</code>格式，在 Linux 中无所谓；将目标文件与其他使用到的函数的源文件、库进行链接，生成二进制可执行文件；</li>
+</ul>
+<h2 id="2-gcc-g-编译指令"><a href="#2-gcc-g-编译指令" class="headerlink" title="2 gcc/g++ 编译指令"></a>2 gcc/g++ 编译指令</h2><p>gcc 和 g++都能编译 C/C++代码，仅仅稍有区别</p>
+<ul>
+<li>对于文件<strong>后缀为.c</strong>的，gcc 把它当成是<strong>C 程序</strong>，而 g++当作是<strong>C++程序</strong>；后缀为.cpp 的，两者都会认为是<strong>C++程序</strong>。（两者语法不完全一样）</li>
+<li><strong>编译阶段，g++会调用 gcc</strong>，对于 C++代码，两者是等价的，<strong>但是因为 gcc 命令不能自动和 C ＋＋程序使用的库联接，所以通常用 g++来完成链接</strong></li>
+<li>对于<strong>__cplusplus 宏</strong>，实际上，这个宏只是标志着编译器将会把代码按 C 还是 C++语法来解释，如上所述，<strong>如果后缀为.c，并且采用 GCC 编译器，则该宏就是未定义的，否则，就是已定义</strong>。</li>
+</ul>
+<p>上述规则看似有点绕，反正我的习惯就是 C 用<code>gcc</code>，C++用<code>g++</code>，肯定不会错。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 预处理指令，-o选项用于命名</span></span><br><span class="line">gcc -E file.c -o file.i</span><br><span class="line"><span class="meta">#</span><span class="bash"> 编译指令</span></span><br><span class="line">gcc -S file.i -o file.s</span><br><span class="line"><span class="meta">#</span><span class="bash"> 汇编指令</span></span><br><span class="line">gcc -c file.s -o file.o</span><br><span class="line">gcc -c file1.c -o file1.o</span><br><span class="line"><span class="meta">#</span><span class="bash"> 链接指令</span></span><br><span class="line">gcc -o file.o file1.o -o file.out</span><br><span class="line"><span class="meta">#</span><span class="bash"> 显示所有警告信息</span></span><br><span class="line">gcc -o file.o file1.o -o file.out -Wall</span><br><span class="line"><span class="meta">#</span><span class="bash"> 向程序中注册宏定义</span></span><br><span class="line">gcc -o file.o file1.o -o file.out -D DEBUG</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-静态库制作和使用"><a href="#3-静态库制作和使用" class="headerlink" title="3 静态库制作和使用"></a>3 静态库制作和使用</h2><p>所谓静态和动态，是指链接过程是静态的还是动态的。</p>
+<p>程序在与静态库链接时， 会将汇编生成的目标文件.o 与引用到的库一起链接打包到可执行文件中。因此对应的链接方式称为静态链接。</p>
+<p>故而静态库类似于汇编生成的<code>.o</code>目标文件，其特点如下</p>
+<ul>
+<li>静态库对函数库的链接是放在编译时期完成的。</li>
+<li>程序在运行时与函数库再无瓜葛，移植方便。</li>
+<li>浪费空间和资源，因为所有相关的目标文件与牵涉到的函数库被链接合成一个可执行文件。</li>
+<li>静态库更新，程序需要重新编译进行<strong>全量更新</strong></li>
+</ul>
+<h3 id="3-1-静态库制作"><a href="#3-1-静态库制作" class="headerlink" title="3.1 静态库制作"></a>3.1 静态库制作</h3><p>静态库命名和格式有固定规则，命名必须以<code>lib</code>开头，格式一般为<code>.a</code>或<code>.lib</code></p>
+<p>以加减乘除为例，先写一个<code>.c</code>文件</p>
+<figure class="highlight c"><figcaption><span>mymath.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sub</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a - b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mul</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a * b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">div</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a / b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写一个头文件</p>
+<figure class="highlight c"><figcaption><span>mymath.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">if</span> !defined(MYMATH_H_)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MYMATH_H_</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sub</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mul</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">div</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">// MYMATH_H_</span></span></span><br></pre></td></tr></table></figure>
+
+<p>然后开始制作静态库</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 首先生成源代码的目标文件</span></span><br><span class="line">gcc -c mymath.c -o mymath.o</span><br><span class="line"><span class="meta">#</span><span class="bash"> 使用ar工具制作静态库</span></span><br><span class="line">ar rcs libmymath.lib mymath.o</span><br></pre></td></tr></table></figure>
+
+<p>至此文件目录下就多出<code>libmymath.lib</code>静态库文件了。</p>
+<h3 id="3-2-使用静态库"><a href="#3-2-使用静态库" class="headerlink" title="3.2 使用静态库"></a>3.2 使用静态库</h3><p>写一个 C 文件</p>
+<figure class="highlight c"><figcaption><span>testlib.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"mymath.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">6</span>, b =<span class="number">2</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a + b = %d\n"</span>, add(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a - b = %d\n"</span>, sub(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a * b = %d\n"</span>, mul(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a / b = %d\n"</span>, div(a, b));</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后将此文件与静态库一起编译、链接</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc testlib.c libmymath.lib -o testlib.out</span><br></pre></td></tr></table></figure>
+
+<p>然后运行生成的可执行文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./testlib.out</span></span><br><span class="line">a + b = 8</span><br><span class="line">a - b = 4</span><br><span class="line">a * b = 12</span><br><span class="line">a / b = 3</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-动态库制作和使用"><a href="#4-动态库制作和使用" class="headerlink" title="4 动态库制作和使用"></a>4 动态库制作和使用</h2><p>动态库在程序编译时并不会被连接到目标代码中，而是在程序运行是才被载入。<strong>不同的应用程序如果调用相同的库，那么在内存里只需要有一份该共享库的实例</strong>，规避了空间浪费问题。动态库在程序运行是才被载入，也解决了静态库对程序的更新、部署和发布页会带来麻烦。用户只需要更新动态库即可，<strong>增量更新</strong>。</p>
+<p>动态库又称为分享库，其特点如下</p>
+<ul>
+<li><p>动态库把对一些库函数的链接载入推迟到程序运行的时期。</p>
+</li>
+<li><p>可以实现进程之间的资源共享。（因此动态库也称为共享库）</p>
+</li>
+<li><p>将一些程序升级变得简单。</p>
+</li>
+<li><p>甚至可以真正做到链接载入完全由程序员在程序代码中控制（<strong>显示调用</strong>）。</p>
+</li>
+</ul>
+<p>不同平台下制作动态库有些差异</p>
+<ul>
+<li><p>在 Windows 系统下的执行文件格式是 PE 格式，动态库需要一个<strong>DllMain</strong>函数做出初始化的入口，通常在导出函数的声明时需要有_declspec(dllexport)关键字。</p>
+</li>
+<li><p>Linux 下 gcc 编译的执行文件默认是 ELF 格式，<strong>不需要初始化入口，亦不需要函数做特别的声明，</strong>编写比较方便。</p>
+</li>
+</ul>
+<h3 id="4-1-动态库的制作"><a href="#4-1-动态库的制作" class="headerlink" title="4.1 动态库的制作"></a>4.1 动态库的制作</h3><p>动态库的制作比静态库简单，无需使用<code>ar</code>进行打包。</p>
+<p>同样以加减乘除的 C 代码为例</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 使用两条指令</span></span><br><span class="line">gcc -fPIC -c mymath.c</span><br><span class="line">gcc -shared -o libDynMymath.so mymath.o</span><br><span class="line"><span class="meta">#</span><span class="bash"> 或者合并为一条指令</span></span><br><span class="line">gcc -fPIC -shared -o libDynMymath.so mymath.c</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-动态库的使用"><a href="#4-2-动态库的使用" class="headerlink" title="4.2 动态库的使用"></a>4.2 动态库的使用</h3><p>由于刚才生成的动态库在当前目录下，不在系统默认的动态库路径中，所以使用前需要先将动态库路径的环境变量声明为当前目录，或者将制作的动态库移动到默认的动态库路径。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 声明环境变量</span></span><br><span class="line">export LD_LIBRARY_PATH=~/cppunp/hmunp</span><br><span class="line"><span class="meta">#</span><span class="bash"> 与动态库链接，注意-L参数后带动态库路径</span></span><br><span class="line">gcc testlib.c -o testdynlib.out -lDynMymath   -L../hmunp/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 执行生成程序</span></span><br><span class="line">./testdynlib.out</span><br><span class="line">a + b = 8</span><br><span class="line">a - b = 4</span><br><span class="line">a * b = 12</span><br><span class="line">a / b = 3</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-makefile-的编写"><a href="#5-makefile-的编写" class="headerlink" title="5 makefile 的编写"></a>5 makefile 的编写</h2><p>在一个 C/C++ 项目中，通常一个程序需要多个文件来进行编译完成，使用<code>gcc</code>指令来生成所有目标文件、再链接生成程序，未免过于繁琐，而且在对项目文件进行修改后，每次使用<code>gcc</code>指令重新编译也非常麻烦、耗时。</p>
+<p>而<code>makefile</code>文件可以大大简化这一过程，几乎一劳永逸，书写完成后即使项目结构发生很大变化，也仅需要做很小的更改，甚至无需更改。</p>
+<p>另外每次使用<code>makefile</code>来对项目进行编译时，其仅会对更改过的文件重新生成目标文件，大大降低了程序总编译时间。</p>
+<h3 id="5-1-所使用的示例代码"><a href="#5-1-所使用的示例代码" class="headerlink" title="5.1 所使用的示例代码"></a>5.1 所使用的示例代码</h3><p>这里同样以加减乘除的程序作为示例，但是将加减乘除分为四个 c 文件。如下</p>
+<figure class="highlight c"><figcaption><span>add.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><figcaption><span>sub.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sub</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a - b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><figcaption><span>mul.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mul</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a * b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><figcaption><span>div.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">div</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a / b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后将四个函数声明放入一个头文件</p>
+<figure class="highlight c"><figcaption><span>mymath.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">if</span> !defined(MYMATH_H_)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MYMATH_H_</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sub</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mul</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">div</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">// MYMATH_H_</span></span></span><br></pre></td></tr></table></figure>
+
+<p>再写一个主程序测试函数</p>
+<figure class="highlight c"><figcaption><span>main.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"mymath.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">10</span>, b = <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a + b = %d\n"</span>, add(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a - b = %d\n"</span>, sub(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a * b = %d\n"</span>, mul(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"a / b = %d\n"</span>, div(a, b));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果直接使用<code>gcc</code>命令来编译链接生成程序的话，我们需要以下指令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gcc -c add.c sub.c mul.c div.c</span><br><span class="line">gcc main.c add.o sub.o mul.o div.o -o main.out</span><br></pre></td></tr></table></figure>
+
+<p>然后测试一下生成的主程序</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">./main.out</span><br><span class="line">a + b = 12</span><br><span class="line">a - b = 8</span><br><span class="line">a * b = 20</span><br><span class="line">a / b = 5</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-makefile-的基本规则"><a href="#5-2-makefile-的基本规则" class="headerlink" title="5.2 makefile 的基本规则"></a>5.2 makefile 的基本规则</h3><p><code>makefile</code>类似于<code>shell</code>脚本，可以使用<code>shell</code>函数、语法以及通配符。</p>
+<p><code>makefile</code>的规则包含两个部分，一个是依赖关系，一个是生成目标的方法即对应指令。</p>
+<p>在<code>makefile</code>中，规则的顺序是很重要的，因为，<code>makefile</code>中只应该有一个最终目标，其它的目标都是被这 个目标所连带出来的，所以一定要让<code>make</code>知道你的最终目标是什么。一般来说，定义在<code>makefile</code>中的目标 可能会有很多，但是第一条规则中的目标将被确立为最终的目标。如果第一条规则中的目标有很多个，那么 ，第一个目标会成为最终的目标。make 所完成的也就是这个目标。</p>
+<p>基本格式如下</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ALL 指定最终生成的程序</span></span><br><span class="line"><span class="section">ALL:hello.out</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 冒号左边是目标文件，右边是依赖文件</span></span><br><span class="line"><span class="comment"># 下一行一个Tab后书写对应命令</span></span><br><span class="line"><span class="section">hello.out:hello.o</span></span><br><span class="line">	gcc hello.o -o hello.out</span><br><span class="line"></span><br><span class="line"><span class="section">hello.o:hello.c</span></span><br><span class="line">	gcc -c hello.c -o hello.o</span><br><span class="line"></span><br><span class="line"><span class="comment"># make clean 指令将会执行的指令</span></span><br><span class="line"><span class="comment"># 第一个'-'表示删除不存在的文件不报错</span></span><br><span class="line"><span class="section">clean:</span></span><br><span class="line">	-rm -rf *.o *.out</span><br></pre></td></tr></table></figure>
+
+<p>根据基本格式，我们可以用示例代码写一个最基础的<code>makefile</code>文件</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">ALL:main</span></span><br><span class="line"></span><br><span class="line"><span class="section">main:main.o add.o sub.o mul.o div.o</span></span><br><span class="line">	gcc main.o add.o sub.o mul.o div.o -o main</span><br><span class="line"></span><br><span class="line"><span class="section">mian.o:mian.c</span></span><br><span class="line">	gcc -c main.c -o main.o</span><br><span class="line"></span><br><span class="line"><span class="section">add.o:add.c</span></span><br><span class="line">	gcc -c add.c -o add.o</span><br><span class="line"></span><br><span class="line"><span class="section">sub.o:sub.c</span></span><br><span class="line">	gcc -c sub.c -o sub.o</span><br><span class="line"></span><br><span class="line"><span class="section">mul.o:mul.c</span></span><br><span class="line">	gcc -c mul.c -o mul.o</span><br><span class="line"></span><br><span class="line"><span class="section">div.o:div.c</span></span><br><span class="line">	gcc -c div.c -o div.o</span><br><span class="line"></span><br><span class="line"><span class="section">clean:</span></span><br><span class="line">	-rm -rf *.o *.out main</span><br></pre></td></tr></table></figure>
+
+<p>由于之前已经用<code>gcc</code>命令编译过一次，所以先执行<code>make clean</code>将之前生成的目标文件和主程序删除，再执行<code>make</code>使用<code>makefile</code>文件规则进行编译</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> make clean</span></span><br><span class="line">rm -rf *.o *.out main</span><br><span class="line"><span class="meta">$</span><span class="bash"> make</span></span><br><span class="line">cc    -c -o main.o main.c</span><br><span class="line">gcc -c add.c -o add.o</span><br><span class="line">gcc -c sub.c -o sub.o</span><br><span class="line">gcc -c mul.c -o mul.o</span><br><span class="line">gcc -c div.c -o div.o</span><br><span class="line">gcc main.o add.o sub.o mul.o div.o -o main</span><br><span class="line"><span class="meta">$</span><span class="bash"> ./main</span></span><br><span class="line">a + b = 12</span><br><span class="line">a - b = 8</span><br><span class="line">a * b = 20</span><br><span class="line">a / b = 5</span><br></pre></td></tr></table></figure>
+
+<p>可见这个最基础的<code>makefile</code>文件已经奏效。</p>
+<h3 id="5-3-加入-shell-函数和自动变量"><a href="#5-3-加入-shell-函数和自动变量" class="headerlink" title="5.3 加入 shell 函数和自动变量"></a>5.3 加入 shell 函数和自动变量</h3><p>显然，如果一个项目中文件很多的话，上面的<code>makefile</code>文件将会变得极其冗长，光依赖文件就要写很长一串，这显然很不方便。</p>
+<p>可以引入两个<code>shell</code>函数</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将./目录下所有.c文件的文件名组成列表，然后赋值给src变量</span></span><br><span class="line">src = <span class="variable">$(<span class="built_in">wildcard</span> ./*.c)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 将参数3的src中所有符合参数1匹配规则的文件替换为参数2的格式，得到的新列表复制给obj变量</span></span><br><span class="line">obj = <span class="variable">$(<span class="built_in">patsubst</span> %c, %.o, <span class="variable">$(src)</span>)</span></span><br></pre></td></tr></table></figure>
+
+<p>再介绍 3 个自动变量</p>
+<ul>
+<li><code>$@</code>：用于表示目标</li>
+<li><code>$^</code>：用于表示所有依赖条件</li>
+<li><code>$&lt;</code>：用于表示第一个依赖条件，还可以将依赖条件从依赖列表中依次取出</li>
+</ul>
+<p>在<code>makefile</code>中的应用如下</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">src = <span class="variable">$(<span class="built_in">wildcard</span> ./*.c)</span></span><br><span class="line">obj = <span class="variable">$(<span class="built_in">patsubst</span> %.c, %.o, <span class="variable">$(src)</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="section">ALL:main</span></span><br><span class="line"></span><br><span class="line"><span class="section">main:<span class="variable">$(obj)</span></span></span><br><span class="line">	gcc <span class="variable">$^</span> -o <span class="variable">$@</span></span><br><span class="line"><span class="comment"># main.o 不生成也无妨，链接时会自动生成</span></span><br><span class="line"><span class="section">mian.o:mian.c</span></span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">add.o:add.c</span></span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">sub.o:sub.c</span></span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">mul.o:mul.c</span></span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">div.o:div.c</span></span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">clean:</span></span><br><span class="line">	-rm -rf <span class="variable">$(obj)</span> main</span><br></pre></td></tr></table></figure>
+
+<p>这个版本在命名上取得了一定简化，但依然有大量类似代码来生成各种目标文件，实际上这部分类似代码可以使用<code>%.o:%.c</code>的规则来简化。优化如下</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">src = <span class="variable">$(<span class="built_in">wildcard</span> ./*.c)</span></span><br><span class="line">obj = <span class="variable">$(<span class="built_in">patsubst</span> %.c, %.o, <span class="variable">$(src)</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="section">ALL:main</span></span><br><span class="line"></span><br><span class="line"><span class="section">main:<span class="variable">$(obj)</span></span></span><br><span class="line">	gcc <span class="variable">$^</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">%.o:%.c</span></span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">clean:</span></span><br><span class="line">	-rm -rf <span class="variable">$(obj)</span> main</span><br></pre></td></tr></table></figure>
+
+<p>这样就简单很多了，依然在 shell 中测试一下</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">$ make clean</span><br><span class="line">rm -rf  ./mul.o  ./main.o  ./add.o  ./div.o  ./sub.o main</span><br><span class="line">$ make</span><br><span class="line">gcc -c mul.c -o mul.o</span><br><span class="line">gcc -c main.c -o main.o</span><br><span class="line">gcc -c add.c -o add.o</span><br><span class="line">gcc -c div.c -o div.o</span><br><span class="line">gcc -c sub.c -o sub.o</span><br><span class="line">gcc mul.o main.o add.o div.o sub.o -o main</span><br><span class="line">$ ./main</span><br><span class="line">a + b = 12</span><br><span class="line">a - b = 8</span><br><span class="line">a * b = 20</span><br><span class="line">a / b = 5</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-4-源代码在子文件夹时的优化"><a href="#5-4-源代码在子文件夹时的优化" class="headerlink" title="5.4 源代码在子文件夹时的优化"></a>5.4 源代码在子文件夹时的优化</h3><p>之前所有的源文件、头文件以及<code>makefile</code>文件都在同一个文件夹里，在实际中更常见的情况应该是源文件、头文件都放在不同的文件夹中，而<code>makefile</code>文件则在根目录下。并且有时也需要加入或更改一些编译的参数如<code>-Wall</code>和用于调试的<code>-g</code>等。这里根据该种情况对<code>makefile</code>文件进行优化。</p>
+<p>假如所有.c 文件都放入<code>src</code>的子文件夹，所有头文件都放入<code>inc</code>的子文件夹，然后新建一个<code>obj</code>文件用以存放生成的目标文件。结构如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> tree</span></span><br><span class="line">.</span><br><span class="line">├── inc</span><br><span class="line">│   └── mymath.h</span><br><span class="line">├── makefile</span><br><span class="line">├── obj</span><br><span class="line">└── src</span><br><span class="line">    ├── add.c</span><br><span class="line">    ├── div.c</span><br><span class="line">    ├── main.c</span><br><span class="line">    ├── mul.c</span><br><span class="line">    └── sub.c</span><br></pre></td></tr></table></figure>
+
+<p>源文件的路径变化，只需在<code>makefile</code>文件中修改<code>wildcard</code>和<code>patsubst</code>函数的参数即可；由于头文件也更改了路径，在主程序中不做修改的话，则需在生成目标文件时指定头文件目录，所以需要一个变量来保存头文件路径；关于编译参数<code>-Wall</code>和<code>-g</code>，为了方便修改，也将其定义为一个变量。</p>
+<p>优化后如下</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">src = <span class="variable">$(<span class="built_in">wildcard</span> ./src/*.c)</span></span><br><span class="line">obj = <span class="variable">$(<span class="built_in">patsubst</span> ./src%.c, ./obj/%.o, <span class="variable">$(src)</span>)</span></span><br><span class="line"></span><br><span class="line">inc_path = ./inc</span><br><span class="line">myArgs = -Wall -g</span><br><span class="line"></span><br><span class="line"><span class="section">ALL:main</span></span><br><span class="line"></span><br><span class="line"><span class="section">main:<span class="variable">$(obj)</span></span></span><br><span class="line">	gcc <span class="variable">$^</span> -o <span class="variable">$@</span> <span class="variable">$(myArgs)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(obj)</span>:./obj/%.o:./src/%.c</span><br><span class="line">	gcc -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span> <span class="variable">$(myArgs)</span> -I <span class="variable">$(inc_path)</span></span><br><span class="line"></span><br><span class="line"><span class="section">clean:</span></span><br><span class="line">	-rm -rf <span class="variable">$(obj)</span> main</span><br><span class="line"><span class="comment"># 伪目标，防止有生成名为clean的文件后，make clean指令失效</span></span><br><span class="line"><span class="meta"><span class="meta-keyword">.PHONY</span>:clean</span></span><br></pre></td></tr></table></figure>
+
+<p>注意文件中关于伪目标的注释。</p>
+<p>还有一种情况就是同一个项目有时需要使用不同的<code>makefile</code>规则来进行测试或适应不同的环境，那么可以在使用<code>make</code>指令时加上<code>-f</code>选项，后面再接指定的<code>makefile</code>文件名。如新建一个<code>makefile</code>文件，将其命名为<code>make_ubuntu</code>，</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -f make_ubuntu</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-GDB-调试基础"><a href="#6-GDB-调试基础" class="headerlink" title="6 GDB 调试基础"></a>6 GDB 调试基础</h2><p>GDB, 是 The GNU Project Debugger 的缩写, 是 Linux 下功能全面的调试工具。GDB 支持断点、单步执行、打印变量、观察变量、查看寄存器、查看堆栈等调试手段。在 Linux 环境软件开发中，GDB 是主要的调试工具，用来调试 C 和 C++ 程序。</p>
+<p>实际上，一般调试程序都会借助一些 IDEA 或者编辑器上的插件，比如我之前都是用 VScode 进行配置后来调试的。</p>
+<p>虽然直接使用 gdb 的情况并不多，但了解一些基本指令和方法还是有一些帮助的。在此对 gdb 的一些调试指令做一个简单的总结记录。</p>
+<h3 id="6-1-gdb-使用方法"><a href="#6-1-gdb-使用方法" class="headerlink" title="6.1 gdb 使用方法"></a>6.1 gdb 使用方法</h3><p>在使用 gdb 调试前，要<strong>保证生成的程序包含调试信息</strong>，也就是说在使用 gcc 进行编译生成程序时，<strong>必须要加<code>-g</code>参数</strong>来生成调试信息。</p>
+<p>这里使用一个简单的示例程序</p>
+<figure class="highlight c"><figcaption><span>testgdb.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="comment">// 使用随机数初始化数组</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">init_arr</span><span class="params">(<span class="keyword">int</span>* arr, <span class="keyword">int</span> len)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; len; ++i)</span><br><span class="line">        arr[i] = rand() % <span class="number">20</span> + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 将数组进行打印输出</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">print_arr</span><span class="params">(<span class="keyword">int</span> *arr, <span class="keyword">int</span> len)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"arr: "</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; len; ++i)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%d "</span>, arr[i]);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 将数组进行选择排序</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">select_sort</span><span class="params">(<span class="keyword">int</span> *arr, <span class="keyword">int</span> len)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, j, k, tmp;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; len - <span class="number">1</span>; ++i) &#123;</span><br><span class="line">        k = i;</span><br><span class="line">        <span class="keyword">for</span> (j = i + <span class="number">1</span>; j &lt; len; ++j) &#123;</span><br><span class="line">            <span class="keyword">if</span> (arr[k] &gt; arr[j])</span><br><span class="line">                k = j;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> ( i != k) &#123;</span><br><span class="line">            tmp = arr[i];</span><br><span class="line">            arr[i] = arr[k];</span><br><span class="line">            arr[k] = tmp;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> arr[<span class="number">20</span>];</span><br><span class="line">    <span class="keyword">char</span> *p = <span class="string">"hello"</span>;</span><br><span class="line"></span><br><span class="line">    srand(time(<span class="literal">NULL</span>));</span><br><span class="line">    init_arr(arr, <span class="number">20</span>);</span><br><span class="line">    print_arr(arr, <span class="number">20</span>);</span><br><span class="line">    select_sort(arr, <span class="number">20</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"------------after sort-----------\n"</span>);</span><br><span class="line">    print_arr(arr, <span class="number">20</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用 gcc 来编译程序</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc testgdb.c -o test -g</span><br></pre></td></tr></table></figure>
+
+<p>然后进入 gdb 命令界面</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">gdb test</span><br><span class="line">GNU gdb (Ubuntu 8.1-0ubuntu3.2) 8.1.0.20180409-git</span><br><span class="line">Copyright (C) 2018 Free Software Foundation, Inc.</span><br><span class="line">License GPLv3+: GNU GPL version 3 or later</span><br><span class="line">...省略n行</span><br><span class="line">(gdb)</span><br></pre></td></tr></table></figure>
+
+<p>在 gdb 命令行界面，<strong>输入 run 执行待调试程序</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) run</span><br></pre></td></tr></table></figure>
+
+<p>在 gdb 命令行界面，<strong>输入 quit 退出 gdb</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) quit</span><br></pre></td></tr></table></figure>
+
+<p>在 gdb 命令行界面，<strong>使用 (gdb) help command 可以查看命令的用法</strong>。</p>
+<p>在 gdb 命令行界面可以<strong>执行外部的 Shell 命令</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) !shell 命令</span><br></pre></td></tr></table></figure>
+
+<p>例如查看当前目录的文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) !ls</span><br><span class="line">test  testgdb.c</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-2-gdb-常用指令"><a href="#6-2-gdb-常用指令" class="headerlink" title="6.2 gdb 常用指令"></a>6.2 gdb 常用指令</h3><h4 id="list-l-查看源代码"><a href="#list-l-查看源代码" class="headerlink" title="list/l 查看源代码"></a>list/l 查看源代码</h4><p>使用<code>list 1</code>从第一行列出源代码，数字可以更改</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) list 1</span><br><span class="line">1       #include &lt;time.h&gt;</span><br><span class="line">2       #include &lt;stdlib.h&gt;</span><br><span class="line">3       #include &lt;stdio.h&gt;</span><br><span class="line">4</span><br><span class="line">5       void init_arr(int* arr, int len) &#123;</span><br><span class="line">6           for(int i = 0; i &lt; len; ++i)</span><br><span class="line">7               arr[i] = rand() % 20 + 1;</span><br><span class="line">8       &#125;</span><br><span class="line">9</span><br><span class="line">10      void print_arr(int *arr, int len) &#123;</span><br></pre></td></tr></table></figure>
+
+<p>继续输入<code>list</code>或<code>l</code>可以继续显示剩下的代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) l</span><br><span class="line">11          printf("arr: ");</span><br><span class="line">12          for (int i = 0; i &lt; len; ++i)</span><br><span class="line">13              printf("%d ", arr[i]);</span><br><span class="line">14          printf("\n");</span><br><span class="line">15      &#125;</span><br><span class="line">16</span><br><span class="line">17      void select_sort(int *arr, int len) &#123;</span><br><span class="line">18          int i, j, k, tmp;</span><br><span class="line">19          for (i = 0; i &lt; len - 1; ++i) &#123;</span><br><span class="line">20              k = i;</span><br></pre></td></tr></table></figure>
+
+<h4 id="break-b-设置断点"><a href="#break-b-设置断点" class="headerlink" title="break/b 设置断点"></a>break/b 设置断点</h4><p>使用<code>break</code>或<code>b</code>设置断点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) break 38</span><br><span class="line">Breakpoint 1 at 0xa07: file testgdb.c, line 38.</span><br><span class="line">(gdb) b 40</span><br><span class="line">Breakpoint 2 at 0xa29: file testgdb.c, line 40.</span><br></pre></td></tr></table></figure>
+
+<p>所设置的断点可以使用<code>info b</code>来查看。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info b</span><br><span class="line">Num     Type           Disp Enb Address            What</span><br><span class="line">1       breakpoint     keep y   0x0000000008000a43 in main at testgdb.c:38</span><br><span class="line">2       breakpoint     keep y   0x0000000008000a65 in main at testgdb.c:40</span><br></pre></td></tr></table></figure>
+
+<p>还可以设置条件断点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b 20 if i = 5</span><br><span class="line">Breakpoint 3 at 0x8000904: file testgdb.c, line 20.</span><br></pre></td></tr></table></figure>
+
+<h4 id="run-r-运行程序"><a href="#run-r-运行程序" class="headerlink" title="run/r 运行程序"></a>run/r 运行程序</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(gdb) run</span><br><span class="line">Starting program: /home/choupin/cppunp/hmapue/day02/test</span><br><span class="line"></span><br><span class="line">Breakpoint 1, main () at testgdb.c:38</span><br><span class="line">38          init_arr(arr, 20);</span><br></pre></td></tr></table></figure>
+
+<h4 id="next-n-运行至下一语句"><a href="#next-n-运行至下一语句" class="headerlink" title="next/n 运行至下一语句"></a>next/n 运行至下一语句</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) next</span><br><span class="line">39          print_arr(arr, 20);</span><br><span class="line">(gdb) next</span><br><span class="line">arr: 14 8 11 3 16 15 12 16 13 20 8 20 4 11 10 2 8 2 13 4</span><br><span class="line"></span><br><span class="line">Breakpoint 2, main () at testgdb.c:40</span><br><span class="line">40          select_sort(arr, 20);</span><br></pre></td></tr></table></figure>
+
+<h4 id="step-s-单步调试"><a href="#step-s-单步调试" class="headerlink" title="step/s 单步调试"></a>step/s 单步调试</h4><p>单步调试遇到函数调用，将会进入函数，逐句执行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">(gdb) n</span><br><span class="line">arr: 16 17 19 17 17 9 15 1 6 12 4 8 16 19 2 12 20 7 20 15</span><br><span class="line"></span><br><span class="line">Breakpoint 2, main () at testgdb.c:40</span><br><span class="line">40          select_sort(arr, 20);</span><br><span class="line"><span class="meta">#</span><span class="bash"> 接上一步</span></span><br><span class="line">(gdb) s</span><br><span class="line">select_sort (arr=0x7ffffffedc50, len=20) at testgdb.c:19</span><br><span class="line">19          for (i = 0; i &lt; len - 1; ++i) &#123;</span><br><span class="line">(gdb) s</span><br><span class="line">20              k = i;</span><br><span class="line">(gdb) step</span><br><span class="line">21              for (j = i + 1; j &lt; len; ++j) &#123;</span><br></pre></td></tr></table></figure>
+
+<h4 id="print-p-查看变量的值"><a href="#print-p-查看变量的值" class="headerlink" title="print/p 查看变量的值"></a>print/p 查看变量的值</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p i</span><br><span class="line"><span class="meta">$</span><span class="bash">1 = 0</span></span><br><span class="line">(gdb) p j</span><br><span class="line"><span class="meta">$</span><span class="bash">2 = 32767</span></span><br><span class="line">(gdb) s</span><br><span class="line">22                  if (arr[k] &gt; arr[j])</span><br><span class="line">(gdb) p j</span><br><span class="line"><span class="meta">$</span><span class="bash">3 = 1</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="finish-结束当前函数调用"><a href="#finish-结束当前函数调用" class="headerlink" title="finish 结束当前函数调用"></a>finish 结束当前函数调用</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(gdb) finish</span><br><span class="line">Run till exit from #0  select_sort (arr=0x7ffffffedc50, len=20)</span><br><span class="line">    at testgdb.c:21</span><br><span class="line">main () at testgdb.c:41</span><br><span class="line">41          printf("------------after sort-----------\n");</span><br><span class="line">(gdb) p arr</span><br><span class="line"><span class="meta">$</span><span class="bash">5 = &#123;1, 2, 4, 6, 7, 8, 9, 12, 12, 15, 15, 16, 16, 17, 17, 17,</span></span><br><span class="line">  19, 19, 20, 20&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="continue-继续执行断点后续语句"><a href="#continue-继续执行断点后续语句" class="headerlink" title="continue 继续执行断点后续语句"></a>continue 继续执行断点后续语句</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(gdb) continue</span><br><span class="line">Continuing.</span><br><span class="line">------------after sort-----------</span><br><span class="line">arr: 1 2 4 6 7 8 9 12 12 15 15 16 16 17 17 17 19 19 20 20</span><br><span class="line">[Inferior 1 (process 5646) exited normally]</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-3-GDB-其他指令"><a href="#6-3-GDB-其他指令" class="headerlink" title="6.3 GDB 其他指令"></a>6.3 GDB 其他指令</h3><h4 id="设置-main-函数命令行参数"><a href="#设置-main-函数命令行参数" class="headerlink" title="设置 main 函数命令行参数"></a>设置 main 函数命令行参数</h4><p>进行 gdb 命令行后，可以有两种方法设置<code>main</code>函数的命令行参数。</p>
+<p>先修改一下源文件</p>
+<figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="deletion">-int main() &#123;</span></span><br><span class="line"><span class="addition">+int main(int argc, char *argv[]) &#123;</span></span><br><span class="line"><span class="addition">+    printf("%s %s %s\n", argv[1], argv[2], argv[3]);</span></span><br><span class="line">    int arr[20];</span><br><span class="line">    char *p = "hello";</span><br><span class="line">    srand(time(NULL));</span><br><span class="line">    init_arr(arr, 20);</span><br><span class="line">    print_arr(arr, 20);</span><br><span class="line">    select_sort(arr, 20);</span><br><span class="line">    printf("------------after sort-----------\n");</span><br><span class="line">    print_arr(arr, 20);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>重新编译生成程序，再进入 gdb。</p>
+<p>第一种，在<code>run</code>之前使用<code>set args</code>设置参数，再<code>run</code>或<code>start</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set args aa bb cc</span><br><span class="line">(gdb) run</span><br><span class="line">Starting program: /home/choupin/cppunp/hmapue/day02/test aa bb cc</span><br><span class="line">aa bb cc</span><br><span class="line">arr: 18 17 9 13 1 16 8 7 18 5 3 11 2 15 16 16 16 1 10 12</span><br><span class="line">------------after sort-----------</span><br><span class="line">arr: 1 1 2 3 5 7 8 9 10 11 12 13 15 16 16 16 16 17 18 18</span><br><span class="line">[Inferior 1 (process 5818) exited normally]</span><br></pre></td></tr></table></figure>
+
+<p>第二种，在<code>run</code>的时候直接加所需要的参数</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) run aa bb cc</span><br><span class="line">Starting program: /home/choupin/cppunp/hmapue/day02/test aa bb cc</span><br><span class="line">aa bb cc</span><br><span class="line">arr: 15 4 19 7 17 19 6 2 12 18 6 6 9 15 20 9 12 15 5 1</span><br><span class="line">------------after sort-----------</span><br><span class="line">arr: 1 2 4 5 6 6 6 7 9 9 12 12 15 15 15 17 18 19 19 20</span><br><span class="line">[Inferior 1 (process 5822) exited normally]</span><br></pre></td></tr></table></figure>
+
+<h4 id="ptype-查看变量类型"><a href="#ptype-查看变量类型" class="headerlink" title="ptype 查看变量类型"></a>ptype 查看变量类型</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) ptype arr</span><br><span class="line">type = int [20]</span><br></pre></td></tr></table></figure>
+
+<h4 id="backtrace-bt-列出当前程序正在存活的栈帧"><a href="#backtrace-bt-列出当前程序正在存活的栈帧" class="headerlink" title="backtrace/bt 列出当前程序正在存活的栈帧"></a>backtrace/bt 列出当前程序正在存活的栈帧</h4><p>先<code>next</code>到<code>select_sort()</code>函数，然后<code>step</code>进入，再使用<code>bt</code>查看当前栈帧</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) n</span><br><span class="line">arr: 5 12 1 18 4 7 18 13 1 9 3 16 7 16 1 20 4 8 8 15</span><br><span class="line"></span><br><span class="line">Breakpoint 2, main (argc=4, argv=0x7ffffffedd78) at testgdb.c:40</span><br><span class="line">40          select_sort(arr, 20);</span><br><span class="line">(gdb) s</span><br><span class="line">select_sort (arr=0x7ffffffedc30, len=20) at testgdb.c:19</span><br><span class="line">19          for (i = 0; i &lt; len - 1; ++i) &#123;</span><br><span class="line">(gdb) bt</span><br><span class="line"><span class="meta">#</span><span class="bash">0  select_sort (arr=0x7ffffffedc30, len=20) at testgdb.c:19</span></span><br><span class="line"><span class="meta">#</span><span class="bash">1  0x0000000008000a76 <span class="keyword">in</span> main (argc=4, argv=0x7ffffffedd78) at testgdb.c:40</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="frame-切换栈帧"><a href="#frame-切换栈帧" class="headerlink" title="frame 切换栈帧"></a>frame 切换栈帧</h4><p>切换栈帧需要知道当前栈帧的编号</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(gdb) frame 0</span><br><span class="line"><span class="meta">#</span><span class="bash">0  select_sort (arr=0x7ffffffedc30, len=20) at testgdb.c:19</span></span><br><span class="line">19          for (i = 0; i &lt; len - 1; ++i) &#123;</span><br><span class="line">(gdb) frame 1</span><br><span class="line"><span class="meta">#</span><span class="bash">1  0x0000000008000a76 <span class="keyword">in</span> main (argc=4, argv=0x7ffffffedd78) at testgdb.c:40</span></span><br><span class="line">40          select_sort(arr, 20);</span><br></pre></td></tr></table></figure>
+
+<h4 id="display-undisplay-设置或取消跟踪变量"><a href="#display-undisplay-设置或取消跟踪变量" class="headerlink" title="display/undisplay 设置或取消跟踪变量"></a>display/undisplay 设置或取消跟踪变量</h4><p>使用<code>display</code>可以设置需要跟踪的变量，之后再使用<code>run</code>，将会在每一步展示设置后的变量，变量前是展示的编号，可以使用<code>display</code>加编号来取消。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">(gdb) display arr</span><br><span class="line">3: arr = (int *) 0x7ffffffedc30</span><br><span class="line">(gdb) run</span><br><span class="line">The program being debugged has been started already.</span><br><span class="line">Start it from the beginning? (y or n) y</span><br><span class="line">Starting program: /home/choupin/cppunp/hmapue/day02/test aa bb cc</span><br><span class="line">aa bb cc</span><br><span class="line"></span><br><span class="line">Breakpoint 1, main (argc=4, argv=0x7ffffffedd78) at testgdb.c:38</span><br><span class="line">38          init_arr(arr, 20);</span><br><span class="line">1: arr = &#123;9, 0, -12573088, 32767, -74584, 32767, 15775231, 0, 1, 0, 134220541, 0,</span><br><span class="line">  -12514912, 32767, 0, 0, 134220464, 0, 134219536, 0&#125;</span><br><span class="line">(gdb) n</span><br><span class="line">39          print_arr(arr, 20);</span><br><span class="line">1: arr = &#123;19, 6, 14, 16, 17, 17, 13, 9, 16, 17, 3, 11, 3, 18, 10, 10, 4, 2, 1, 16&#125;</span><br><span class="line">(gdb) undisplay 1</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-结束语"><a href="#7-结束语" class="headerlink" title="7 结束语"></a>7 结束语</h3><p>本篇文章从介绍 C/C++ 程序最基本的编译链接过程开始，接着介绍了 Linux 平台下使用<code>gcc</code>编译程序的基本指令，以此为基础，介绍了静态库和动态库，以及相应的制作和使用方法，最后两个部分分别记录了 <code>makefile</code>文件的书写方法和<code>GDB</code>调试的常用指令。虽然本篇文章的内容并不和 Linux 系统编程直接相关，但确实是重要的基础。之后的部分将会记录 Linux 系统编程常用的函数，以及一些系统指令的实现。</p>
+
+      
+    </div>
+
+    
+      
+
+<div class="post-body">
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\01\07\STL3-SGI2StageAllocator\" rel="bookmark">TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\01\02\STL2-AlloctorAndCtorDtor\" rel="bookmark">TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\13\STL4-IteratorAndInitTool\" rel="bookmark">TinySTL实现项目（四）：迭代器、反向迭代器及初始化工具</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\01\01\STL1-TraitsAndType-traitsTemplate\" rel="bookmark">TinySTL实现项目（一）：traits 技巧与 type_traits 模板</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\13\unp-01\" rel="bookmark">Linux 网络编程（一）：socket相关函数与C/S模型实现</a></div>
+      
+    </li>
+  
+  </ul>
+</div>
+
+
+    
+
+    
+    
+    
+
+    
+      <div>
+        <div>
+  
+    <div style="text-align:center;color:#bfbfbf;font-size:16px;">
+      <span>-------- 本文结束 </span>
+      <i class="fa fa-paw"></i>
+      <span> 感谢阅读 --------</span>
+    </div>
+  
+</div>
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>给我加块红烧肉吧</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.jpg" alt="Chou Bin 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Chou Bin 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <!-- JS库 clipboard 拷贝内容到粘贴板-->
+<script src="https://cdn.bootcss.com/clipboard.js/2.0.1/clipboard.min.js"></script>
+
+<!-- JS库 sweetalert 显示提示信息-->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<ul class="post-copyright">
+  <!-- 本文标题 -->
+  <li>
+    <strong>本文标题： </strong>
+    Linux 系统编程（一）：C/C++程序编译与gdb调试
+  </li>
+
+  <!-- 本文作者 -->
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>
+    Chou Bin
+  </li>
+
+  <!-- 创建时间 -->
+  <li>
+    <strong>创建时间： </strong>
+    2020年02月15日 - 20时02分
+  </li>
+
+  <!-- 修改时间 -->
+  <li>
+    <strong>修改时间： </strong>
+    2020年02月15日 - 20时02分
+  </li>
+
+  <!-- 引用链接 -->
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://yoursite.com/2020/02/15/apue-hm01/" title="Linux 系统编程（一）：C/C++程序编译与gdb调试"
+      >http://yoursite.com/2020/02/15/apue-hm01/</a
+    >
+    <span class="copy-path" title="点击复制引用链接"
+      ><i
+        style="cursor: pointer"
+        class="fa fa-clipboard"
+        data-clipboard-text="[Chou Bin's Blog | Linux 系统编程（一）：C/C++程序编译与gdb调试](http://yoursite.com/2020/02/15/apue-hm01/)"
+        aria-label="复制成功"
+      ></i
+    ></span>
+  </li>
+
+  <!-- 版权声明 -->
+  <li class="post-copyright-license">
+    <strong
+      >版权声明：
+    </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+<script>
+  var clipboard = new ClipboardJS(".fa-clipboard");
+  clipboard.on("success", function(target) {
+    var message = document.createElement("div");
+    message.innerHTML =
+      '<i class="fa fa-check-circle message-icon"></i><span class="message-content">' +
+      target.trigger.getAttribute("aria-label") +
+      "</span>";
+    swal({
+      content: message,
+      className: "copy-success-message",
+      timer: 1000,
+      button: false
+    });
+  });
+</script>
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C/" rel="tag"><i class="fa fa-tags"></i> C++</a>
+          
+            <a href="/tags/Linux/" rel="tag"><i class="fa fa-tags"></i> Linux</a>
+          
+            <a href="/tags/GDB/" rel="tag"><i class="fa fa-tags"></i> GDB</a>
+          
+        </div>
+      
+
+      
+      
+        <div class="post-widgets">
+        
+          <div class="wp_rating">
+            <div id="wpac-rating"></div>
+          </div>
+        
+
+        
+
+        
+        </div>
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/02/13/unp-01/" rel="next" title="Linux 网络编程（一）：socket相关函数与C/S模型实现">
+                Linux 网络编程（一）：socket相关函数与C/S模型实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <a href="/">
+                <img class="site-author-image" itemprop="image"
+                  src="/images/avatar.jpg"
+                  alt="Chou Bin" />
+              </a>
+            
+              <p class="site-author-name" itemprop="name">Chou Bin</p>
+              <p class="site-description motion-element" itemprop="description">慢就是快，快就是慢</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/lammmmmmm" target="_blank" title="GitHub" rel="external nofollow"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:ozc236@163.com" target="_blank" title="E-Mail" rel="external nofollow"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://weibo.com/3817442698" target="_blank" title="Weibo" rel="external nofollow"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+            <div class="cc-license motion-element" itemprop="license">
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" target="_blank" rel="external nofollow">
+                <img src="/images/cc-by-nc-sa.svg" alt="Creative Commons" />
+              </a>
+            </div>
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://lesylin.com" title="Lesy" target="_blank">Lesy</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-编译基本过程"><span class="nav-text">1 编译基本过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-gcc-g-编译指令"><span class="nav-text">2 gcc&#x2F;g++ 编译指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-静态库制作和使用"><span class="nav-text">3 静态库制作和使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-静态库制作"><span class="nav-text">3.1 静态库制作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-使用静态库"><span class="nav-text">3.2 使用静态库</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-动态库制作和使用"><span class="nav-text">4 动态库制作和使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-动态库的制作"><span class="nav-text">4.1 动态库的制作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-动态库的使用"><span class="nav-text">4.2 动态库的使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-makefile-的编写"><span class="nav-text">5 makefile 的编写</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-所使用的示例代码"><span class="nav-text">5.1 所使用的示例代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-makefile-的基本规则"><span class="nav-text">5.2 makefile 的基本规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-加入-shell-函数和自动变量"><span class="nav-text">5.3 加入 shell 函数和自动变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-源代码在子文件夹时的优化"><span class="nav-text">5.4 源代码在子文件夹时的优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-GDB-调试基础"><span class="nav-text">6 GDB 调试基础</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-1-gdb-使用方法"><span class="nav-text">6.1 gdb 使用方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-2-gdb-常用指令"><span class="nav-text">6.2 gdb 常用指令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#list-l-查看源代码"><span class="nav-text">list&#x2F;l 查看源代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#break-b-设置断点"><span class="nav-text">break&#x2F;b 设置断点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#run-r-运行程序"><span class="nav-text">run&#x2F;r 运行程序</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#next-n-运行至下一语句"><span class="nav-text">next&#x2F;n 运行至下一语句</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#step-s-单步调试"><span class="nav-text">step&#x2F;s 单步调试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#print-p-查看变量的值"><span class="nav-text">print&#x2F;p 查看变量的值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#finish-结束当前函数调用"><span class="nav-text">finish 结束当前函数调用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#continue-继续执行断点后续语句"><span class="nav-text">continue 继续执行断点后续语句</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-3-GDB-其他指令"><span class="nav-text">6.3 GDB 其他指令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#设置-main-函数命令行参数"><span class="nav-text">设置 main 函数命令行参数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ptype-查看变量类型"><span class="nav-text">ptype 查看变量类型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#backtrace-bt-列出当前程序正在存活的栈帧"><span class="nav-text">backtrace&#x2F;bt 列出当前程序正在存活的栈帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#frame-切换栈帧"><span class="nav-text">frame 切换栈帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#display-undisplay-设置或取消跟踪变量"><span class="nav-text">display&#x2F;undisplay 设置或取消跟踪变量</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-结束语"><span class="nav-text">7 结束语</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script
+  async
+  src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"
+></script>
+<div class="copyright">&copy; 2019 – <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Chou Bin</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点总字数：</span>
+    
+    <span title="站点总字数">100k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    
+    <span title="站点阅读时长">2:47</span>
+  
+</div>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      你是小破站的第 <span class="busuanzi-value" id="busuanzi_value_site_uv"></span> 为访客
+    </span>
+  
+
+  
+    <span class="site-pv">
+      历经 <span class="busuanzi-value" id="busuanzi_value_site_pv"></span> 次回眸才与你相遇
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  
+  
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(function (item) {
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz',
+        appKey: 'rr9HWuw87tMKsDi665PptoeR',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        meta:guest,
+        pageSize:'10' || 10,
+        visitor: false
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('body');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('3');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz",
+                'X-LC-Key': "rr9HWuw87tMKsDi665PptoeR",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+  
+  <script type="text/javascript">
+  wpac_init = window.wpac_init || [];
+  wpac_init.push({widget: 'Rating', id: 22562,
+    el: 'wpac-rating',
+    color: 'fadb14'
+  });
+  (function() {
+    if ('WIDGETPACK_LOADED' in window) return;
+    WIDGETPACK_LOADED = true;
+    var mc = document.createElement('script');
+    mc.type = 'text/javascript';
+    mc.async = true;
+    mc.src = '//embed.widgetpack.com/widget.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+  })();
+  </script>
+
+
+  
+  
+  
+  <script src="/lib/pangu/dist/pangu.min.js?v=3.3"></script>
+  <script type="text/javascript">pangu.spacingPage();</script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+  <script async src="/js/cursor/fireworks.js"></script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+
+
+ 
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-precise-range-plugin@1.3.0/moment-precise-range.min.js"></script>
+<script>
+  function timer() {
+    var ages = moment.preciseDiff(moment(),moment(20191221,"YYYYMMDD"));
+    ages = ages.replace(/years?/, "年");
+    ages = ages.replace(/months?/, "月");
+    ages = ages.replace(/days?/, "天");
+    ages = ages.replace(/hours?/, "小时");
+    ages = ages.replace(/minutes?/, "分");
+    ages = ages.replace(/seconds?/, "秒");
+    ages = ages.replace(/\d+/g, '<span style="color:#1890ff">$&</span>');
+    div.innerHTML = `我已在此等候你 ${ages}`;
+  }
+  var div = document.createElement("div");
+  //插入到copyright之后
+  var copyright = document.querySelector(".copyright");
+  document.querySelector(".footer-inner").insertBefore(div, copyright.nextSibling);
+  timer();
+  setInterval("timer()",1000)
+</script>
+
+
+ 
+<script>
+  var OriginTitile = document.title;
+  var titleTime;
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      document.title = "(つェ⊂) 看不见我看不见我~" + OriginTitile;
+      clearTimeout(titleTime);
+    } else {
+      document.title = "(*´∇｀*) 咦，被你发现了~" + OriginTitile;
+      titleTime = setTimeout(function() {
+        document.title = OriginTitile;
+      }, 2000);
+    }
+  });
+</script>
+
+</body>
+</html>
+
+
+
+  <script src="/js/wobblewindow.js"></script>
+  <script>
+    //只在桌面版网页启用特效
+    if( window.innerWidth > 768  ){
+      $(document).ready(function () {
+        
+          $('#header').wobbleWindow({
+            radius: 65,
+            movementTop: false,
+            movementLeft: false,
+            movementRight: false,
+            debug: false,
+          });
+        
+
+        
+
+        
+          $('#footer').wobbleWindow({
+            radius: 65,
+            movementBottom: false,
+            movementLeft: false,
+            movementRight: false,
+            position: 'absolute',
+            debug: false,
+          });
+        
+      });
+    }
+  </script>

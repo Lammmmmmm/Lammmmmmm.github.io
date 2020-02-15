@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2020/02/15/apue-hm01/</loc>
+    
+    <lastmod>2020-02-15T12:51:16.880Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2020/01/07/STL3-SGI2StageAllocator/</loc>
     
     <lastmod>2020-02-14T05:20:56.451Z</lastmod>
