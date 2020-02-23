@@ -151,26 +151,26 @@
 
 
 
-  <meta name="description" content="本篇文章是TinySTL实现的系列文章的第二篇，介绍了allocator模板类的作用和实现，以及其使用到的全局construct、destroy函数的实现。相关代码依然可以在我的github。 1 allocator 的作用关于为什么要有allocator类知乎上有专门的讨论，这里简单总结一下allocator的作用。 在C++中常用的内存配置和释放操作一般会使用new和delete，如下 123">
+  <meta name="description" content="1 进程和PCB控制块1.1 进程简单描述 进程可以理解为程序的一次执行，也可以理解为程序运行的一个实例。进程是分配资源的基本单位。一个进程由三部分组成：进程控制块PCB（Process Control Block），有关程序段，该程序段对其操作的数据结构集。  每个用户均可同时运行多个程序。为了区分每一个运行的程序，Linux给每个进程都做了标识，称为进程号PID（process ID），每个进">
 <meta property="og:type" content="article">
-<meta property="og:title" content="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
-<meta property="og:url" content="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/index.html">
+<meta property="og:title" content="Linux系统编程（五）：多进程和fork()">
+<meta property="og:url" content="http://yoursite.com/2020/02/24/apue-hm05/index.html">
 <meta property="og:site_name" content="Chou Bin&#39;s Blog">
-<meta property="og:description" content="本篇文章是TinySTL实现的系列文章的第二篇，介绍了allocator模板类的作用和实现，以及其使用到的全局construct、destroy函数的实现。相关代码依然可以在我的github。 1 allocator 的作用关于为什么要有allocator类知乎上有专门的讨论，这里简单总结一下allocator的作用。 在C++中常用的内存配置和释放操作一般会使用new和delete，如下 123">
+<meta property="og:description" content="1 进程和PCB控制块1.1 进程简单描述 进程可以理解为程序的一次执行，也可以理解为程序运行的一个实例。进程是分配资源的基本单位。一个进程由三部分组成：进程控制块PCB（Process Control Block），有关程序段，该程序段对其操作的数据结构集。  每个用户均可同时运行多个程序。为了区分每一个运行的程序，Linux给每个进程都做了标识，称为进程号PID（process ID），每个进">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2020-01-02T13:15:19.308Z">
-<meta property="article:modified_time" content="2020-01-03T08:02:35.385Z">
+<meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/PCB.gif">
+<meta property="article:published_time" content="2020-02-23T17:28:19.099Z">
+<meta property="article:modified_time" content="2020-02-23T17:27:46.657Z">
 <meta property="article:author" content="Chou Bin">
-<meta property="article:tag" content="C++">
-<meta property="article:tag" content="STL">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/PCB.gif">
 
 
 
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/02/24/apue-hm05/"/>
 
 
 
@@ -180,7 +180,7 @@
   };
 </script>
 
-  <title>TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy | Chou Bin's Blog</title>
+  <title>Linux系统编程（五）：多进程和fork() | Chou Bin's Blog</title>
   
 
 
@@ -388,7 +388,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/24/apue-hm05/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Chou Bin">
@@ -405,7 +405,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy
+          <h2 class="post-title" itemprop="name headline">Linux系统编程（五）：多进程和fork()
               
             
           </h2>
@@ -430,37 +430,12 @@
                 
               
 
-              <time title="创建时间：2020-01-02 21:15:19" itemprop="dateCreated datePublished" datetime="2020-01-02T21:15:19+08:00">2020-01-02</time>
+              <time title="创建时间：2020-02-24 01:28:19" itemprop="dateCreated datePublished" datetime="2020-02-24T01:28:19+08:00">2020-02-24</time>
             
 
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a></span>
-
-                
-                
-                  ，
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/STL/" itemprop="url" rel="index"><span itemprop="name">STL</span></a></span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -470,8 +445,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2020/01/02/STL2-AlloctorAndCtorDtor/#comments" itemprop="discussionUrl">
-                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/01/02/STL2-AlloctorAndCtorDtor/" itemprop="commentCount"></span>
+                <a href="/2020/02/24/apue-hm05/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/02/24/apue-hm05/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -479,7 +454,7 @@
 
           
           
-             <span id="/2020/01/02/STL2-AlloctorAndCtorDtor/" class="leancloud_visitors" data-flag-title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
+             <span id="/2020/02/24/apue-hm05/" class="leancloud_visitors" data-flag-title="Linux系统编程（五）：多进程和fork()">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -507,7 +482,7 @@
                 
                   <span class="post-meta-item-text">本文字数：</span>
                 
-                <span title="本文字数">27k</span>
+                <span title="本文字数">23k</span>
               
 
               
@@ -521,7 +496,7 @@
                 
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
-                <span title="阅读时长">45 分钟</span>
+                <span title="阅读时长">38 分钟</span>
               
             </div>
           
@@ -541,124 +516,111 @@
       
 
       
-        <p>本篇文章是TinySTL实现的系列文章的第二篇，介绍了<code>allocator</code>模板类的作用和实现，以及其使用到的全局<code>construct</code>、<code>destroy</code>函数的实现。相关代码依然可以在<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">我的github</a>。</p>
-<h2 id="1-allocator-的作用"><a href="#1-allocator-的作用" class="headerlink" title="1 allocator 的作用"></a>1 allocator 的作用</h2><p>关于为什么要有<code>allocator</code>类知乎上有专门的讨论，这里简单总结一下<code>allocator</code>的作用。</p>
-<p>在C++中常用的内存配置和释放操作一般会使用<code>new</code>和<code>delete</code>，如下</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Foo</span> &#123;</span> ... &#125;;</span><br><span class="line">Foo* ptr = <span class="keyword">new</span> Foo;	<span class="comment">// 配置内存，然后构造对象</span></span><br><span class="line"><span class="keyword">delete</span> ptr;		    <span class="comment">// 调用对象的析构函数将对象析构，然后释放内存</span></span><br></pre></td></tr></table></figure>
+        <h2 id="1-进程和PCB控制块"><a href="#1-进程和PCB控制块" class="headerlink" title="1 进程和PCB控制块"></a>1 进程和PCB控制块</h2><h3 id="1-1-进程简单描述"><a href="#1-1-进程简单描述" class="headerlink" title="1.1 进程简单描述"></a>1.1 进程简单描述</h3><p> 进程可以理解为程序的一次执行，也可以理解为程序运行的一个实例。<strong>进程是分配资源的基本单位</strong>。一个进程由三部分组成：进程控制块PCB（Process Control Block），有关程序段，该程序段对其操作的数据结构集。 </p>
+<p>每个用户均可同时运行多个程序。为了区分每一个运行的程序，Linux<strong>给每个进程都做了标识</strong>，称为进程号PID（process ID），每个进程的进程号是<strong>唯一</strong>的。</p>
+<p>Linux 给每个进程都打上了运行者的标志，<strong>用户可以控制自己的进程</strong>：给自己的进程分配不同的<strong>优先级</strong>，也可以随时<strong>终止</strong>自己的进程。其实就是进程继承了执行者的UID和GID。</p>
+<p> Linux 不可能在一个 CPU 上同时处理多个任务（作业）请求，而是<strong>采用 “分时” 技术</strong>来处理这些任务请求。 </p>
+<h3 id="1-2-ps和kill命令"><a href="#1-2-ps和kill命令" class="headerlink" title="1.2 ps和kill命令"></a>1.2 ps和kill命令</h3><p>常使用<code>ps</code>命令来查看当前运行的进程</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 使用ps ajx 可以查看其父进程</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ps aux</span></span><br><span class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</span><br><span class="line">root         1  0.0  0.0   8892   228 ?        Ssl  13:13   0:00 /init</span><br><span class="line">root         8  0.0  0.0   8904   160 tty1     Ss   13:13   0:00 /init</span><br><span class="line">choupin      9  0.0  0.0   8436   100 tty1     S    13:13   0:03 /mnt/e/wsl-term</span><br><span class="line">choupin     11  0.0  0.0  22296  7476 pts/0    Ss   13:13   0:19 /bin/zsh</span><br><span class="line">root        46  0.0  0.0   8908   164 tty2     Ss   13:13   0:00 /init</span><br><span class="line">choupin     47  0.0  0.0  10660   476 tty2     S    13:13   0:00 sh -c "$VSCODE_</span><br><span class="line">choupin     48  0.0  0.0  10660   520 tty2     S    13:13   0:00 sh /mnt/c/Users</span><br><span class="line">choupin     53  0.0  0.0  10660   500 tty2     S    13:13   0:00 sh /home/choupi</span><br><span class="line">choupin     55  0.0  0.2 979712 49872 tty2     Sl   13:13   0:25 /home/choupin/.</span><br><span class="line">choupin     75  0.0  0.1 861412 20436 tty2     Sl   13:13   0:00 /home/choupin/.</span><br><span class="line">choupin     82  0.0  0.1 791204 19028 tty2     Sl   13:13   0:00 /home/choupin/.</span><br><span class="line">choupin    113  0.0  0.1 860912 19612 tty2     Sl   13:13   0:00 /home/choupin/.</span><br></pre></td></tr></table></figure>
 
-<p>如同注释所说，<code>new</code>其实包含了两步操作：</p>
+<p><code>STAT</code>字段表示进程状态，在下一节介绍。详细命令参数可通过<code>man</code>手册查看。</p>
+<p>可以使用<code>kill</code>命令通过进程PID号来终止进程</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kill 9527 -9</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>-9</code>是终止的信号参数。</p>
+<h3 id="1-2-进程的状态"><a href="#1-2-进程的状态" class="headerlink" title="1.2 进程的状态"></a>1.2 进程的状态</h3><p>一个进程至少具有5种基本状态：初始态、执行状态、等待（阻塞）状态、就绪状态、终止状态。</p>
 <ul>
-<li>调用<code>::operator new</code>配置内存</li>
-<li>调用类构造函数<code>Foo:Foo()</code>来构造对象</li>
+<li><strong>初始状态</strong>：进程刚被创建，由于其他进程正占有CPU所以得不到执行，只能处于初始状态。 </li>
+<li><strong>就绪状态</strong>：只有处于就绪状态的经过调度才能到执行状态。</li>
+<li><strong>运行状态</strong>：任意时刻处于执行状态的进程只能有一个。 </li>
+<li><strong>等待状态</strong>：进程等待某件事件完成 </li>
+<li><strong>终止状态</strong>：进程结束</li>
 </ul>
-<p><code>delete</code>也包含了两步操作：</p>
+<p>有的系统，为了暂时缓和内存的紧张状态，或为了调节系统负荷，又引入了<strong>挂起</strong>的功能：暂时挂起一部分进程，把他们从内存临时换出到外存。</p>
+<p><strong>阻塞挂起</strong>：进程在外存并等待某事件的出现 </p>
+<p><strong>就绪挂起</strong>：进程在外存，但只要进入内存，就可以运行</p>
+<p>事实上不同系统不同翻译中对进程状态的描述略有差别。其中<code>STAT</code>字段即表示进程状态，通过<code>man ps</code>可以查看相关含义</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">D    uninterruptible sleep (usually IO)</span><br><span class="line">R    running or runnable (on run queue)</span><br><span class="line">S    interruptible sleep (waiting for an event to complete)</span><br><span class="line">T    stopped by job control signal</span><br><span class="line">t    stopped by debugger during the tracing</span><br><span class="line">W    paging (not valid since the 2.6.xx kernel)</span><br><span class="line">X    dead (should never be seen)</span><br><span class="line">Z    defunct ("zombie") process, terminated but not reaped by its parent</span><br><span class="line"></span><br><span class="line">&lt;    high-priority (not nice to other users)</span><br><span class="line">N    low-priority (nice to other users)</span><br><span class="line">L    has pages locked into memory (for real-time and custom IO)</span><br><span class="line">s    is a session leader</span><br><span class="line">l    is multi-threaded (using CLONE_THREAD, like NPTL pthreads do)</span><br></pre></td></tr></table></figure>
+
+<p>对应解释为</p>
+<ol>
+<li>R—TASK_RUNNING(可执行状态)</li>
+<li>S—TASK_INTERRUPTIBLE(可中断的睡眠状态)</li>
+<li>D—TASK_UNINTERRUPTIBLE(不可中断的睡眠状态)</li>
+<li>T — TASK_STOPPED或TASK_TRACED（暂停状态或跟踪状态）</li>
+<li>Z — TASK_DEAD - EXIT_ZOMBIE（退出状态，进程成为僵尸进程）</li>
+<li>X — TASK_DEAD - EXIT_DEAD（退出状态，进程即将被销毁）</li>
+</ol>
+<p><a href="https://blog.csdn.net/wjd_231/article/details/81432999?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task" target="_blank" rel="noopener">详细介绍可见这里。</a></p>
+<h3 id="1-3-PCB进程控制块"><a href="#1-3-PCB进程控制块" class="headerlink" title="1.3 PCB进程控制块"></a>1.3 PCB进程控制块</h3><p>在Linux中进程信息存放在叫做进程控制块的数据结构中，每个进程在内核中都有一个进程控制块（PCB）来维护进程相关的信息。Linux内核的进程控制块是task_struct结构体。这在不同系统中的实现略有差别。</p>
+<p>task_struct是Linux内核的一种数据结构，它会被装载到RAM并且包含着进程的信息。每个进程都把它的信息放在task_struct这个数据结构体中，其中包含了众多信息。</p>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/PCB.gif" alt=""></p>
+<p>主要信息有</p>
 <ul>
-<li>调用类析构函数<code>Foo:~Foo()</code>将对象析构</li>
-<li>调用<code>::operator delete</code>来释放对象所占的内存</li>
+<li><p>进程id</p>
+</li>
+<li><p>进程状态status </p>
+</li>
+<li><p>文件描述符表</p>
+</li>
+<li><p>进程工作目录位置</p>
+</li>
+<li><p>umask掩码</p>
+</li>
+<li><p>信号相关信息资源</p>
+</li>
+<li><p>用户id和组id</p>
+</li>
 </ul>
-<p>这里简单解释一下什么是<code>::perator new</code>和<code>::operator delete</code>：</p>
-<div class="note info"><p>上文的<code>new</code>也被称为<code>new operator</code>，如上所述包含了分配内存、构造对象两步操作，不能被重载；</p><p>而<code>::operator new</code>接受一个类型为<code>size_t</code>的参数作为要求的空间大小，<strong>只分配所要求的空间</strong>，而不调用相关对象的构造函数。可以被重载。</p><p><code>::operator delete</code>类似，一般接受一个指针类型的参数，<strong>只释放指针所占的内存</strong>，可以被重载。</p></div>
+<p>详细内容见操作系统相关书籍，留待后续补充。</p>
+<h2 id="2-fork-和父子进程"><a href="#2-fork-和父子进程" class="headerlink" title="2 fork()和父子进程"></a>2 fork()和父子进程</h2><h3 id="2-1-fork"><a href="#2-1-fork" class="headerlink" title="2.1 fork()"></a>2.1 fork()</h3><p>可以在程序中通过<code>fork()</code>来创建进程，此时创建的进程即是该程序进程的子进程。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> fork(<span class="keyword">void</span>);</span><br></pre></td></tr></table></figure>
 
-<p>在STL里面<code>allocator</code>的作用就是将以上<code>new</code>和<code>delete</code>的两步操作区分开来，用<code>allocator::allocate()</code>来分配内存，用<code>::construct()</code>来构造对象，用<code>allocator::deallocate()</code>释放内存，用<code>::destroy()</code>来析构对象。主要用在为各种容器如<code>vector</code>、<code>list</code>分配空间完成构造。</p>
-<p>这样的好处就是，有时已经有现成的内存空间可以用了，这时我想构造对象的时候就直接用<code>construct()</code>，而无需花费时间去寻找新的一块内存，然后再分配内存，最后才能构造对象。</p>
-<div class="note danger"><p>C++中内存管理十分重要，要建立好概念，分配内存对应释放内存，构造对应析构。例如<code>malloc()</code>对应<code>free()</code>，<code>construct</code>对应<code>destroy</code>，<code>new</code>对应<code>delete</code>。</p></div>
+<p>这个函数非常奇妙，在正常执行的情况下，将会有两个返回值。所谓的两个返回值其实就是在父子进程中各返回一次，在父进程中返回的是子进程的PID，而在子进程中返回的是0，因此可以通过检查返回值，来确定后续代码在父进程还是子进程中执行。因为进程号都是大于0的，所以执行出错时返回-1。</p>
+<h3 id="2-2-getpid-getppid"><a href="#2-2-getpid-getppid" class="headerlink" title="2.2 getpid()\getppid()"></a>2.2 getpid()\getppid()</h3><p>这两个函数分别可以获取当前进程的PID和当前进程父进程的PID。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> getpid(<span class="keyword">void</span>);</span><br><span class="line"><span class="keyword">pid_t</span> getppid(<span class="keyword">void</span>);</span><br></pre></td></tr></table></figure>
 
-<h2 id="2-简单的allocator类实现"><a href="#2-简单的allocator类实现" class="headerlink" title="2 简单的allocator类实现"></a>2 简单的allocator类实现</h2><p>在STL标准中，要求了<code>allocator</code>具有以下接口</p>
-<figure class="highlight c++"><figcaption><span>allocator.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">allocator</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// STL 要求的类型别名定义</span></span><br><span class="line">    <span class="keyword">using</span> value_type        = T;</span><br><span class="line">    <span class="keyword">using</span> pointer           = T*;</span><br><span class="line">    <span class="keyword">using</span> const_pointer     = <span class="keyword">const</span> T*;</span><br><span class="line">    <span class="keyword">using</span> reference         = T&amp;;</span><br><span class="line">    <span class="keyword">using</span> const_reference   = <span class="keyword">const</span> T&amp;;</span><br><span class="line">    <span class="keyword">using</span> size_type         = <span class="keyword">size_t</span>;</span><br><span class="line">    <span class="keyword">using</span> difference_type   = <span class="keyword">ptrdiff_t</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// STL 要求的类接口，使用静态函数实现可以使频繁调用下减小开销</span></span><br><span class="line">    <span class="comment">// 负责分配内存</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> T*	<span class="title">allocate</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> T*	<span class="title">allocate</span><span class="params">(size_type n)</span></span>;</span><br><span class="line">	<span class="comment">// 负责释放内存</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(T*, size_type n)</span></span>;</span><br><span class="line">	<span class="comment">// 负责构造对象</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr, <span class="keyword">const</span> T&amp; value)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T* ptr, T&amp;&amp; value)</span></span>;</span><br><span class="line">	<span class="comment">// 负责析构对象</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* ptr)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* first, T* last)</span></span>;</span><br><span class="line">	<span class="comment">// 获取某对象的地址</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> T*       <span class="title">address</span><span class="params">(T&amp; val)</span></span>;</span><br><span class="line">    <span class="comment">// 获取可配置T类型对象的最大数目</span></span><br><span class="line">    <span class="function"><span class="keyword">static</span> size_t   <span class="title">max_size</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="comment">// 使T类型的alloctor可以为U类型的对象分配内存</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebind</span> &#123;</span></span><br><span class="line">        <span class="keyword">using</span> other = allocator&lt;U&gt;;</span><br><span class="line">    &#125;; </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>该函数不会执行出错，无需判断返回值。</p>
+<h3 id="2-3-父子进程关系"><a href="#2-3-父子进程关系" class="headerlink" title="2.3 父子进程关系"></a>2.3 父子进程关系</h3><p>在刚刚完成<code>fork()</code>后，父子进程间的data段、text段、堆、栈、环境变量、全局变量、宿主目录位置、进程工作目录位置、信号处理方式都完全一样。</p>
+<p>而进程PID、<code>fork()</code>返回值、各自父进程、进程创建时间、闹钟、未决信号集则不一样。</p>
+<p>而其相同的全局变量也并未完全是简单地拷贝，而是遵循“读时共享、写时复制”的原则。如文件描述符和mmap映射区。</p>
+<h3 id="2-4-循环创建n个子进程"><a href="#2-4-循环创建n个子进程" class="headerlink" title="2.4 循环创建n个子进程"></a>2.4 循环创建n个子进程</h3><p>这里要求循环创建n个子进程时，并且保证所有子进程均由最初父进程产生，也就是说所有子进程应该是兄弟关系。并可以控制特定子进程完成特定操作。</p>
+<figure class="highlight c"><figcaption><span>fork_loop.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((pid = fork()) == <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (i == <span class="number">5</span>) &#123;</span><br><span class="line">        sleep(<span class="number">5</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"parent, and my PID is %d\n"</span>, getpid());</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        sleep(i);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%dth child, and my PID is %d, my parent's PID is %d\n"</span>, i + <span class="number">1</span>,</span><br><span class="line">               getpid(), getppid());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>从上述代码可以看出，<code>allocator</code>类主要分为类型别名定义的接口和“干活”接口。</p>
-<p>其中类型别名定义部分在STL模板类的实现里非常常见，包括后续的各种迭代器和容器如<code>vector</code>、<code>list</code>等内部都有各种别名定义，且接口基本统一。其作用类似<a href="https://choubin.site/2020/01/01/STL1-TraitsAndType-traitsTemplate/" target="_blank" rel="noopener">本系列上篇</a>所说<code>traits</code>技巧，可以通过这些统一的内嵌别名定义，从模板类或其对象里直接取得所需类型，方便函数的实现和使用。后续在迭代器和容器设计的部分将会看到。</p>
-<p>而“干活”的接口主要就是负责分配内存、释放内存、构造/析构对象，显然如第一节所说，我们可以使用<code>::operator new</code>、<code>::operator delete</code>、对象的构造/析构函数来实现这些功能。</p>
-<p>注意这些干活的接口都是以类中的<strong>静态成员函数</strong>实现的，为什么要用静态函数？<strong>依然是为了效率</strong>。 </p>
-<div class="note info"><p>普通的成员函数一般都隐含一个<code>this</code>指针，静态成员函数由于不与任何对象相联系，故而不具有<code>this</code>指针。</p><p>正是由于没有<code>this</code>指针的额外开销，因此静态成员函数与类的普通成员函数相比<strong>速度会有少许提升</strong>。同时调用静态成员函数时既可以通过类的对象、指向类对象的指针来调用，也<strong>可以直接使用类名来调用</strong>，这样就节省了创建对象的开销。</p><p>也正是因为以上原因，静态成员之间可以相互访问，但不能访问非静态成员函数和非静态数据成员</p></div>
+<p>编译执行，看看效果</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./fork_loop</span></span><br><span class="line">1th child, and my PID is 3669, my parent's PID is 3668</span><br><span class="line">2th child, and my PID is 3670, my parent's PID is 3668</span><br><span class="line">3th child, and my PID is 3671, my parent's PID is 3668</span><br><span class="line">4th child, and my PID is 3672, my parent's PID is 3668</span><br><span class="line">5th child, and my PID is 3673, my parent's PID is 3668</span><br><span class="line">parent, and my PID is 3668</span><br></pre></td></tr></table></figure>
 
-<p>部分实现如下</p>
-<figure class="highlight c++"><figcaption><span>allocator.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用::operator new实现，分配内存并返回空指针</span></span><br><span class="line"><span class="comment">// 使用static_cast将返回的void指针转换为目标类型的指针</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">T* allocator&lt;T&gt;::allocate(size_type n) &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;T*&gt;(::<span class="keyword">operator</span> <span class="keyword">new</span>(n * <span class="keyword">sizeof</span>(T)));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 使用::operator delete释放指针指向内存</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::deallocate(T* ptr) &#123;</span><br><span class="line">	<span class="keyword">if</span> (ptr != <span class="literal">nullptr</span>) ::<span class="function"><span class="keyword">operator</span> <span class="title">delete</span><span class="params">(ptr)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 负责构造对象，对全局函数construct()的调用</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::construct(T* ptr) &#123;</span><br><span class="line">	mystl::construct(ptr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::construct(T* ptr, <span class="keyword">const</span> T&amp; value) &#123;</span><br><span class="line">	mystl::construct(ptr, value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::construct(T* ptr, T&amp;&amp; value) &#123;</span><br><span class="line">	mystl::construct(ptr, mystl::<span class="built_in">move</span>(value));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 负责析构对象，对全局函数destroy()的调用</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::destroy(T* ptr) &#123;</span><br><span class="line">	mystl::destroy(ptr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">void</span> allocator&lt;T&gt;::destroy(T* first, T* last) &#123;</span><br><span class="line">	mystl::destroy(first, last);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="3-wait-和waitpid"><a href="#3-wait-和waitpid" class="headerlink" title="3 wait()和waitpid()"></a>3 wait()和waitpid()</h2><h3 id="3-1-函数介绍"><a href="#3-1-函数介绍" class="headerlink" title="3.1 函数介绍"></a>3.1 函数介绍</h3><p>先介绍一下孤儿进程和僵尸进程。</p>
+<ul>
+<li>孤儿进程：父进程先于子进终止，子进程沦为“孤儿进程”，会被 init 进程领养。</li>
+<li>僵尸进程：子进程终止，父进程尚未对子进程进行回收，在此期间，子进程为“僵尸进程”。kill 对其无效。子进程的PCB资源会残留在内核中，浪费内存资源。</li>
+</ul>
+<p>所以在子进程终止之后，父进程应当承担回收子进程的责任，否则就可能产生故而进程和僵尸进程。</p>
+<p>可以在父进程中使用<code>wait()</code>或<code>waitpid()</code>来对子进程进行回收。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="comment">// 参数为一个传出参数，表示回收子进程的状态</span></span><br><span class="line"><span class="comment">// 可传入NULL，表示不关心子进程终止状态</span></span><br><span class="line"><span class="keyword">pid_t</span> wait(<span class="keyword">int</span> *wstatus);</span><br><span class="line"><span class="comment">// 参数1指定要回收的子进程，参数3可设置WNOHANG非阻塞</span></span><br><span class="line"><span class="keyword">pid_t</span> waitpid(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *wstatus, <span class="keyword">int</span> options);</span><br></pre></td></tr></table></figure>
 
-<p>在<code>allocate()</code>的实现上，用了<code>static_cast</code>静态转换，这是因为<code>::operator new</code>返回的是<code>void*</code>类型，需要做一个强制类型转换来确保类型安全。</p>
-<div class="note info"><ul><li><p>编译器隐式执行的任何类型转换都可以由<code>static_cast</code>来完成，比如<code>int</code>与<code>float</code>、<code>double</code>与<code>char</code>、<code>enum</code>与<code>int</code>之间的转换等</p></li><li><p>使用<code>static_cast</code>可以找回存放在<code>void*</code>指针中的值</p></li><li><p><code>static_cast</code>可以把任何类型的表达式转换成<code>void</code>类型</p></li><li><p><code>static_cast</code>把任何类型的表达式转换成<code>void</code>类型</p></li><li><p>与<code>const_cast</code>相比，<code>static_cast</code>不能改变变量的<code>const</code>属性，也包括<code>volitale</code>或<code>__unaligned</code>属性</p></li></ul></div>
+<p><code>wait()</code>函数将<strong>阻塞</strong>地回收<strong>任意一个子进程</strong>；执行成功时将返回回收进程的PID，失败返回-1；通过传出参数<code>wstatus</code>可以获得子进程终止状态。</p>
+<ul>
+<li>获取子进程正常终止值：<code>WIFEXITED(status)</code>为真的话，可调用 <code>WEXITSTATUS(status)</code>获得子进程的退出值。</li>
+<li>获取导致子进程异常终止信号：<code>WIFSIGNALED(status)</code>为真的话，可调用<code>WTERMSIG(status)</code>得到导致子进程异常终止的信号编号。</li>
+</ul>
+<p><code>waitpid()</code>则可以<strong>指定特定子进程</strong>进行回收，同时也可以设置非阻塞。返回值大于0时表示成功回收子进程，返回值就是对应PID；返回值为0时，表示设置了非阻塞且子进程未结束未能回收；返回值为-1时表程序执行出错。</p>
+<p>注意无论这两个函数一次都只能回收一个子进程，需要回收多个子进程需要使用循环。</p>
+<h3 id="3-2-使用实例"><a href="#3-2-使用实例" class="headerlink" title="3.2 使用实例"></a>3.2 使用实例</h3><p>在2.4节的程序中，子进程先于父进程终止，且父进程未对其回收，所以会产生僵尸进程。这里对其进行改进</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">pid_t</span> pid, wpid;</span><br><span class="line">    <span class="keyword">int</span> status, i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((pid = fork()) == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"fork error"</span>);</span><br><span class="line">        <span class="keyword">if</span> (pid == <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 子进程</span></span><br><span class="line">    <span class="keyword">if</span> (i &lt; <span class="number">5</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"It is a child process %d, and the parent process id is %d\n"</span>,</span><br><span class="line">               getpid(), getppid());</span><br><span class="line">        sleep(<span class="number">5</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"the child process going to die\n"</span>);</span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; <span class="comment">// 父进程</span></span><br><span class="line">        <span class="keyword">while</span>(i--)&#123;</span><br><span class="line">        wpid = wait(&amp;status);</span><br><span class="line">        <span class="keyword">if</span> (wpid == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"wait error"</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"It is a parent process %d\n"</span>, getpid());</span><br><span class="line">        <span class="keyword">if</span> (WIFEXITED(status))</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"child exit with %d\n"</span>, WEXITSTATUS(status));</span><br><span class="line">        <span class="keyword">if</span> (WIFSIGNALED(status))</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"child kill with signal %d\n"</span>, WTERMSIG(status));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>以上实现都在 TinySTL 项目的头文件 <code>allocator.h</code>中。</p>
-<p>那么<code>allocator&lt;T&gt;::construct()</code>和<code>allocator&lt;T&gt;::destroy()</code>分别调用的全局<code>construct()</code>和<code>destroy()</code>函数又是什么呢？见下一小节介绍。</p>
-<h2 id="3-全局construct-和destroy"><a href="#3-全局construct-和destroy" class="headerlink" title="3 全局construct()和destroy()"></a>3 全局<code>construct()</code>和<code>destroy()</code></h2><p>顾名思义，全局<code>construct()</code>的作用就是构造对象。在上一节中，我们知道分配内存的操作已经由<code>allocator&lt;T&gt;::allocate()</code>完成了，而这个<code>construct()</code>，就是将一个初值设定到已经分配好的的空间上去。因此其需要两个参数，一个是指针来表示内存的位置，另一个是我们希望设定的初值。其中一个实现版本如下：</p>
-<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用了两个模板参数，并使用类型转换</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T1, <span class="keyword">typename</span> T2&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(T1* ptr, <span class="keyword">const</span> T2&amp; value)</span> </span>&#123; <span class="keyword">new</span>(ptr) T1(value); &#125; <span class="comment">// placement new</span></span><br></pre></td></tr></table></figure>
+<p>编译后执行，得到结果</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./<span class="built_in">wait</span></span></span><br><span class="line">It is a child process 3938, and the parent process id is 3937</span><br><span class="line">It is a child process 3939, and the parent process id is 3937</span><br><span class="line">It is a child process 3940, and the parent process id is 3937</span><br><span class="line">It is a child process 3941, and the parent process id is 3937</span><br><span class="line">It is a child process 3942, and the parent process id is 3937</span><br><span class="line">the child process going to die</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 0</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 1</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 2</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 3</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 4</span><br></pre></td></tr></table></figure>
 
-<p>这里用两个模板参数的好处是可以使得函数在使用上更具“通用性”，同时使用了强制类型转换，使得不会产生隐式转换的警告。</p>
-<div class="note danger"><p>这里的<code>new</code>不同于第一节中提到的<code>new operator</code>和<code>operator new</code>，而是所谓的<code>placement new</code>。其实<code>placement new</code>只是<code>operator new</code>的一个重载版本。它并不分配内存，返回值是指向已分配好内存的指针。其作用就是在已分配的内存中创建一个对象，这是<code>new</code>做不到的。</p><p><code>placement new</code>的作用是构造对象，故而对应了析构。其对象在使用结束后要记得析构。</p></div>
-
-<p>上文已经强调了构造对应了析构，显然<code>destroy()</code>的作用就是将对象析构了，那么其实现就可以非常简单，只需调用对象的析构函数即可。</p>
-<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 单个参数的全局 destroy 函数，直接调用对象的析构函数</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(T* ptr)</span> </span>&#123; ptr -&gt;~T(); &#125;</span><br></pre></td></tr></table></figure>
-
-<p>另外<code>destroy()</code>还有两个参数的重载版本，其接受两个迭代器，表示将一个范围内的对象析构。</p>
-<p>而在本系列的<a href="https://choubin.site/2020/01/01/STL1-TraitsAndType-traitsTemplate/" target="_blank" rel="noopener">上篇文章</a>中已经介绍了POD类型，并提到了<code>trivial destructor</code>的概念。在对大范围的对象析构的时候，如果我们事先得知该对象的类型具有<code>trivial destructor</code>，即所谓的“平凡”或者说无意义的析构函数，那么我们就没有必要浪费开销来挨个调用这些无关痛痒的析构函数。</p>
-<p>为什么说无关痛痒？因为并不涉及外部内存，对象本身的内存可以继续复用，所以<strong>不调用也不会影响之后的内存释放而造成内存泄露</strong>。只有在对象类型具有<code>non-trivial destructor</code>的时候，才有必要一次次调用其析构函数。</p>
-<p>总之，如果得知对象类型具有<code>trivial destructor</code>，那么我们的<code>destroy()</code>函数可以什么也不做，无需付出复杂度为O(n)的多余开销，大大地提升了程序效率。所以我们需要针对这点对<code>destroy()</code>进行优化。代码如下</p>
-<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// destroy()内部调用的函数，根据对象类型是否有trivial destructor进行重载</span></span><br><span class="line"><span class="comment">// aux 为 auxiliary 缩写，表示其是辅助的函数</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy_aux</span><span class="params">(ForwardIterator first, ForwardIterator last, _true_type)</span> </span>&#123; &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy_aux</span><span class="params">(ForwardIterator first, ForwardIterator last, _false_type)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(; first != last; ++first)</span><br><span class="line">        destroy(first);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 两个参数的全局 destroy 函数，根据其是否具有 trivial 析构函数进行重载</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(ForwardIterator first, ForwardIterator last)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// value_type()函数可以取得迭代器指向对象的类型，注意此时还未实现</span></span><br><span class="line">    <span class="keyword">using</span> is_trivial_dtor =<span class="keyword">typename</span> type_traits&lt;value_type(first)&gt;::has_trivial_destructor;</span><br><span class="line">    destroy_aux(first, last, is_trivial_dtor());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>destroy()</code>函数在接受到两个迭代器以后，先用<code>value_type()</code>函数取得迭代器所指向对象的类型，然后将类型放入<code>type_traits</code>模板中，调用其内嵌的类型别名定义，创建一个类型为<code>_true_type</code>或者<code>_false_true</code>的对象作为第三个参数，来调用辅助函数<code>destroy_aux</code>，以此判断迭代器指向的对象是否拥有<code>trivial destructor</code>。</p>
-<p>可以看到以上函数内部并不复杂，实际上是只需要一两条语句就可以完成的“小操作”，将这些小操作写成函数的好处有很多，比如方便阅读、修改、重用、统一行为。但调用函数会比使用等价的表达式慢很多：大多数时候，调用前要先保存寄存器，并在返回时恢复，复制实参，程序还必须转向一个新位置执行。</p>
-<p>为了避免调用函数带来的开销，我们可以使用<code>inline</code>关键字将函数变为内联函数，内联函数会在程序的调用点上“内联地”展开；并且函数被内联后，编译器可以通过上下文相关的优化的技术对结果代码执行更深入的优化。最终达到提升效率的目的。</p>
-<p>下面对<code>inline</code>关键字做一个简单记录。</p>
-<div class="note info"><ul><li><p>关键字<code>inline</code>必须<strong>与函数定义体放在一起</strong>才能内联。</p></li><li><p>内联函数<strong>最好放入头文件</strong>，否则需要在每个调用的源文件中重复地定义。</p></li><li><p>内联函数省去了函数调用的开销，包括参数压栈、跳转、退栈和返回等操作。</p></li><li><p>内联函数以代码膨胀（拷贝）为代价，在过大函数上滥用会导致总代码量增大，消耗更多内存，Google C++规范中建议<strong>函数少于10行</strong>时才定义为内联函数。</p></li><li><p>若函数内部代码的执行时间远比函数调用开销大，则<code>inline</code>的效率收益很低，如出现<strong>循环或其他复杂的控制结构</strong>，此时不宜使用。</p></li><li><p>类的构造/析构函数可能包含隐藏行为，如调用基类或成员对象的构造/析构函数，不应轻易内联。</p></li><li><p>实际的实现中，<code>inline</code>是对编译器的请求，优秀的编译器可以根据函数定义取消不值得的内联，也有可能自动内联一些简单函数。</p></li><li><p>根据上条，<strong><code>inline</code>不应出现在函数声明中</strong>（不是不能）。</p></li></ul></div>
-
-<h2 id="4-测试"><a href="#4-测试" class="headerlink" title="4 测试"></a>4 测试</h2><p>我们这里已经写好了<code>allocator</code>类，那么如何使用它呢？</p>
-<p>这里可以做一个简单的小测试，来测试我们写的<code>allocator</code>能否用于现有的<code>std::vector</code>，验证其有效性。</p>
-<p>如果目前并未实现<code>iterator_traits</code>模板类和<code>value_type</code>，测试之前还需要对<code>construct.h</code>文件中的<code>destroy()</code>做一点小修改。</p>
-<figure class="highlight c++"><figcaption><span>construct.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ForwardIterator&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(ForwardIterator first, ForwardIterator last)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 由于暂未实现 mystl::iterator_traits，故而使用 std 中已有接口</span></span><br><span class="line">    <span class="keyword">using</span> value_type = <span class="keyword">typename</span> <span class="built_in">std</span>::iterator_traits&lt;ForwardIterator&gt;::value_type;</span><br><span class="line">    <span class="keyword">using</span> is_trivial_dtor = <span class="keyword">typename</span> type_traits&lt;value_type&gt;::has_trivial_destructor;</span><br><span class="line">    destroy_aux(first, last, is_trivial_dtor());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>然后新建一个<code>test.cpp</code>输入以下代码：</p>
-<figure class="highlight c++"><figcaption><span>test.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"allocator.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"type_traits.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>,mystl::allocator&lt;<span class="keyword">int</span>&gt;&gt; vec(<span class="number">5</span>,<span class="number">5</span>);</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span> &amp;each: vec)</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; each &lt;&lt; <span class="string">" "</span>;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>在<code>g++ (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0</code>环境下执行后，可以看到输出为是5个5，这说明我们写的<code>allocator</code>是可以兼容当前编译环境中实现的的<code>std::vector</code>。但在vs2017中编译未通过，应该是与其内部的内存管理尚有冲突，不过这也没关系，可以在后续使用我们自己实现的<code>vector</code>进行测试。</p>
-<h2 id="5-结束语"><a href="#5-结束语" class="headerlink" title="5 结束语"></a>5 结束语</h2><p>本方案实现的<code>allocator</code>类是比较简单的，从实现上也可以看出其仅仅是对<code>operator new</code>、<code>operator delete</code>、<code>placement new</code>的封装。并不是具有SGI STL特色，使用更底层的<code>malloc</code>、<code>free</code>以及内存池机制的两级空间分配器，后续将会对此进行实现，并使用同一种容器来比较两者效率。本节代码已上传，<a href="https://github.com/Lammmmmmm/TinySTL/blob/master/allocator.h" target="_blank" rel="noopener">allocator.h</a>，<a href="https://github.com/Lammmmmmm/TinySTL/blob/master/construct.h" target="_blank" rel="noopener">construct.h</a>。</p>
+<p>显然，所有子进程都已经被回收。</p>
+<h2 id="4-结束语"><a href="#4-结束语" class="headerlink" title="4 结束语"></a>4 结束语</h2><p>本篇文章先简单介绍了进程和PCB控制块的概念，因为这其实应该是操作系统的相关概念，所以在此不多做纠缠，只是有个简单印象，同时记录了相关常用命令<code>ps</code>和<code>kill</code>；然后介绍了用来创建子进程的<code>fork()</code>函数，已经实现了一个循环创建特定个数子进程的小demo；最后介绍了用以回收子进程的<code>wait()</code>和<code>waitpid()</code>函数，并对之前的小demo做了改进，使其不再产生僵尸进程。</p>
+<p><code>fork()</code>函数非常重要，在后续文章其他函数的学习中，还将多次使用其实现多进程程序的编写。</p>
 
       
     </div>
 
     
       
-
-<div class="post-body">
-  <div class="popular-posts-header">相关文章</div>
-  <ul class="popular-posts">
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\01\01\STL1-TraitsAndType-traitsTemplate\" rel="bookmark">TinySTL实现项目（一）：traits 技巧与 type_traits 模板</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\01\07\STL3-SGI2StageAllocator\" rel="bookmark">TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\02\13\STL4-IteratorAndInitTool\" rel="bookmark">TinySTL实现项目（四）：迭代器、反向迭代器及初始化工具</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm02\" rel="bookmark">Linux 系统编程（二）：文件、文件操作函数和相关实例</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\02\15\apue-hm01\" rel="bookmark">Linux 系统编程（一）：C/C++程序编译与gdb调试</a></div>
-      
-    </li>
-  
-  </ul>
-</div>
 
 
     
@@ -726,7 +688,7 @@
   <!-- 本文标题 -->
   <li>
     <strong>本文标题： </strong>
-    TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy
+    Linux系统编程（五）：多进程和fork()
   </li>
 
   <!-- 本文作者 -->
@@ -738,26 +700,26 @@
   <!-- 创建时间 -->
   <li>
     <strong>创建时间： </strong>
-    2020年01月02日 - 21时01分
+    2020年02月24日 - 01时02分
   </li>
 
   <!-- 修改时间 -->
   <li>
     <strong>修改时间： </strong>
-    2020年01月03日 - 16时01分
+    2020年02月24日 - 01时02分
   </li>
 
   <!-- 引用链接 -->
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/" title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy"
-      >http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/</a
+    <a href="http://yoursite.com/2020/02/24/apue-hm05/" title="Linux系统编程（五）：多进程和fork()"
+      >http://yoursite.com/2020/02/24/apue-hm05/</a
     >
     <span class="copy-path" title="点击复制引用链接"
       ><i
         style="cursor: pointer"
         class="fa fa-clipboard"
-        data-clipboard-text="[Chou Bin's Blog | TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy](http://yoursite.com/2020/01/02/STL2-AlloctorAndCtorDtor/)"
+        data-clipboard-text="[Chou Bin's Blog | Linux系统编程（五）：多进程和fork()](http://yoursite.com/2020/02/24/apue-hm05/)"
         aria-label="复制成功"
       ></i
     ></span>
@@ -793,14 +755,6 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/C/" rel="tag"><i class="fa fa-tags"></i> C++</a>
-          
-            <a href="/tags/STL/" rel="tag"><i class="fa fa-tags"></i> STL</a>
-          
-        </div>
-      
 
       
       
@@ -822,18 +776,14 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/01/07/STL3-SGI2StageAllocator/" rel="prev" title="TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类">
-                <i class="fa fa-chevron-left"></i> TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类
-              </a>
-            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/01/01/STL1-TraitsAndType-traitsTemplate/" rel="next" title="TinySTL实现项目（一）：traits 技巧与 type_traits 模板">
-                TinySTL实现项目（一）：traits 技巧与 type_traits 模板 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/02/23/apue-hm04/" rel="next" title="Linux系统编程（四）：utmp文件和who命令的实现">
+                Linux系统编程（四）：utmp文件和who命令的实现 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -1042,7 +992,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-allocator-的作用"><span class="nav-text">1 allocator 的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-简单的allocator类实现"><span class="nav-text">2 简单的allocator类实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-全局construct-和destroy"><span class="nav-text">3 全局construct()和destroy()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-测试"><span class="nav-text">4 测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-结束语"><span class="nav-text">5 结束语</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-进程和PCB控制块"><span class="nav-text">1 进程和PCB控制块</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-进程简单描述"><span class="nav-text">1.1 进程简单描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-ps和kill命令"><span class="nav-text">1.2 ps和kill命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-进程的状态"><span class="nav-text">1.2 进程的状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-PCB进程控制块"><span class="nav-text">1.3 PCB进程控制块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-fork-和父子进程"><span class="nav-text">2 fork()和父子进程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-fork"><span class="nav-text">2.1 fork()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-getpid-getppid"><span class="nav-text">2.2 getpid()\getppid()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-父子进程关系"><span class="nav-text">2.3 父子进程关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-循环创建n个子进程"><span class="nav-text">2.4 循环创建n个子进程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-wait-和waitpid"><span class="nav-text">3 wait()和waitpid()</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-函数介绍"><span class="nav-text">3.1 函数介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-使用实例"><span class="nav-text">3.2 使用实例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-结束语"><span class="nav-text">4 结束语</span></a></li></ol></div>
             
 
           </div>

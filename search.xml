@@ -1,6 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Linux系统编程（五）：多进程和fork()</title>
+    <url>/2020/02/24/apue-hm05/</url>
+    <content><![CDATA[<h2 id="1-进程和PCB控制块"><a href="#1-进程和PCB控制块" class="headerlink" title="1 进程和PCB控制块"></a>1 进程和PCB控制块</h2><h3 id="1-1-进程简单描述"><a href="#1-1-进程简单描述" class="headerlink" title="1.1 进程简单描述"></a>1.1 进程简单描述</h3><p> 进程可以理解为程序的一次执行，也可以理解为程序运行的一个实例。<strong>进程是分配资源的基本单位</strong>。一个进程由三部分组成：进程控制块PCB（Process Control Block），有关程序段，该程序段对其操作的数据结构集。 </p>
+<p>每个用户均可同时运行多个程序。为了区分每一个运行的程序，Linux<strong>给每个进程都做了标识</strong>，称为进程号PID（process ID），每个进程的进程号是<strong>唯一</strong>的。</p>
+<p>Linux 给每个进程都打上了运行者的标志，<strong>用户可以控制自己的进程</strong>：给自己的进程分配不同的<strong>优先级</strong>，也可以随时<strong>终止</strong>自己的进程。其实就是进程继承了执行者的UID和GID。</p>
+<p> Linux 不可能在一个 CPU 上同时处理多个任务（作业）请求，而是<strong>采用 “分时” 技术</strong>来处理这些任务请求。 </p>
+<h3 id="1-2-ps和kill命令"><a href="#1-2-ps和kill命令" class="headerlink" title="1.2 ps和kill命令"></a>1.2 ps和kill命令</h3><p>常使用<code>ps</code>命令来查看当前运行的进程</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 使用ps ajx 可以查看其父进程</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ps aux</span></span><br><span class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</span><br><span class="line">root         1  0.0  0.0   8892   228 ?        Ssl  13:13   0:00 /init</span><br><span class="line">root         8  0.0  0.0   8904   160 tty1     Ss   13:13   0:00 /init</span><br><span class="line">choupin      9  0.0  0.0   8436   100 tty1     S    13:13   0:03 /mnt/e/wsl-term</span><br><span class="line">choupin     11  0.0  0.0  22296  7476 pts/0    Ss   13:13   0:19 /bin/zsh</span><br><span class="line">root        46  0.0  0.0   8908   164 tty2     Ss   13:13   0:00 /init</span><br><span class="line">choupin     47  0.0  0.0  10660   476 tty2     S    13:13   0:00 sh -c "$VSCODE_</span><br><span class="line">choupin     48  0.0  0.0  10660   520 tty2     S    13:13   0:00 sh /mnt/c/Users</span><br><span class="line">choupin     53  0.0  0.0  10660   500 tty2     S    13:13   0:00 sh /home/choupi</span><br><span class="line">choupin     55  0.0  0.2 979712 49872 tty2     Sl   13:13   0:25 /home/choupin/.</span><br><span class="line">choupin     75  0.0  0.1 861412 20436 tty2     Sl   13:13   0:00 /home/choupin/.</span><br><span class="line">choupin     82  0.0  0.1 791204 19028 tty2     Sl   13:13   0:00 /home/choupin/.</span><br><span class="line">choupin    113  0.0  0.1 860912 19612 tty2     Sl   13:13   0:00 /home/choupin/.</span><br></pre></td></tr></table></figure>
+
+<p><code>STAT</code>字段表示进程状态，在下一节介绍。详细命令参数可通过<code>man</code>手册查看。</p>
+<p>可以使用<code>kill</code>命令通过进程PID号来终止进程</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kill 9527 -9</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>-9</code>是终止的信号参数。</p>
+<h3 id="1-2-进程的状态"><a href="#1-2-进程的状态" class="headerlink" title="1.2 进程的状态"></a>1.2 进程的状态</h3><p>一个进程至少具有5种基本状态：初始态、执行状态、等待（阻塞）状态、就绪状态、终止状态。</p>
+<ul>
+<li><strong>初始状态</strong>：进程刚被创建，由于其他进程正占有CPU所以得不到执行，只能处于初始状态。 </li>
+<li><strong>就绪状态</strong>：只有处于就绪状态的经过调度才能到执行状态。</li>
+<li><strong>运行状态</strong>：任意时刻处于执行状态的进程只能有一个。 </li>
+<li><strong>等待状态</strong>：进程等待某件事件完成 </li>
+<li><strong>终止状态</strong>：进程结束</li>
+</ul>
+<p>有的系统，为了暂时缓和内存的紧张状态，或为了调节系统负荷，又引入了<strong>挂起</strong>的功能：暂时挂起一部分进程，把他们从内存临时换出到外存。</p>
+<p><strong>阻塞挂起</strong>：进程在外存并等待某事件的出现 </p>
+<p><strong>就绪挂起</strong>：进程在外存，但只要进入内存，就可以运行</p>
+<p>事实上不同系统不同翻译中对进程状态的描述略有差别。其中<code>STAT</code>字段即表示进程状态，通过<code>man ps</code>可以查看相关含义</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">D    uninterruptible sleep (usually IO)</span><br><span class="line">R    running or runnable (on run queue)</span><br><span class="line">S    interruptible sleep (waiting for an event to complete)</span><br><span class="line">T    stopped by job control signal</span><br><span class="line">t    stopped by debugger during the tracing</span><br><span class="line">W    paging (not valid since the 2.6.xx kernel)</span><br><span class="line">X    dead (should never be seen)</span><br><span class="line">Z    defunct ("zombie") process, terminated but not reaped by its parent</span><br><span class="line"></span><br><span class="line">&lt;    high-priority (not nice to other users)</span><br><span class="line">N    low-priority (nice to other users)</span><br><span class="line">L    has pages locked into memory (for real-time and custom IO)</span><br><span class="line">s    is a session leader</span><br><span class="line">l    is multi-threaded (using CLONE_THREAD, like NPTL pthreads do)</span><br></pre></td></tr></table></figure>
+
+<p>对应解释为</p>
+<ol>
+<li>R—TASK_RUNNING(可执行状态)</li>
+<li>S—TASK_INTERRUPTIBLE(可中断的睡眠状态)</li>
+<li>D—TASK_UNINTERRUPTIBLE(不可中断的睡眠状态)</li>
+<li>T — TASK_STOPPED或TASK_TRACED（暂停状态或跟踪状态）</li>
+<li>Z — TASK_DEAD - EXIT_ZOMBIE（退出状态，进程成为僵尸进程）</li>
+<li>X — TASK_DEAD - EXIT_DEAD（退出状态，进程即将被销毁）</li>
+</ol>
+<p><a href="https://blog.csdn.net/wjd_231/article/details/81432999?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task" target="_blank" rel="noopener">详细介绍可见这里。</a></p>
+<h3 id="1-3-PCB进程控制块"><a href="#1-3-PCB进程控制块" class="headerlink" title="1.3 PCB进程控制块"></a>1.3 PCB进程控制块</h3><p>在Linux中进程信息存放在叫做进程控制块的数据结构中，每个进程在内核中都有一个进程控制块（PCB）来维护进程相关的信息。Linux内核的进程控制块是task_struct结构体。这在不同系统中的实现略有差别。</p>
+<p>task_struct是Linux内核的一种数据结构，它会被装载到RAM并且包含着进程的信息。每个进程都把它的信息放在task_struct这个数据结构体中，其中包含了众多信息。</p>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/PCB.gif" alt=""></p>
+<p>主要信息有</p>
+<ul>
+<li><p>进程id</p>
+</li>
+<li><p>进程状态status </p>
+</li>
+<li><p>文件描述符表</p>
+</li>
+<li><p>进程工作目录位置</p>
+</li>
+<li><p>umask掩码</p>
+</li>
+<li><p>信号相关信息资源</p>
+</li>
+<li><p>用户id和组id</p>
+</li>
+</ul>
+<p>详细内容见操作系统相关书籍，留待后续补充。</p>
+<h2 id="2-fork-和父子进程"><a href="#2-fork-和父子进程" class="headerlink" title="2 fork()和父子进程"></a>2 fork()和父子进程</h2><h3 id="2-1-fork"><a href="#2-1-fork" class="headerlink" title="2.1 fork()"></a>2.1 fork()</h3><p>可以在程序中通过<code>fork()</code>来创建进程，此时创建的进程即是该程序进程的子进程。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> fork(<span class="keyword">void</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这个函数非常奇妙，在正常执行的情况下，将会有两个返回值。所谓的两个返回值其实就是在父子进程中各返回一次，在父进程中返回的是子进程的PID，而在子进程中返回的是0，因此可以通过检查返回值，来确定后续代码在父进程还是子进程中执行。因为进程号都是大于0的，所以执行出错时返回-1。</p>
+<h3 id="2-2-getpid-getppid"><a href="#2-2-getpid-getppid" class="headerlink" title="2.2 getpid()\getppid()"></a>2.2 getpid()\getppid()</h3><p>这两个函数分别可以获取当前进程的PID和当前进程父进程的PID。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> getpid(<span class="keyword">void</span>);</span><br><span class="line"><span class="keyword">pid_t</span> getppid(<span class="keyword">void</span>);</span><br></pre></td></tr></table></figure>
+
+<p>该函数不会执行出错，无需判断返回值。</p>
+<h3 id="2-3-父子进程关系"><a href="#2-3-父子进程关系" class="headerlink" title="2.3 父子进程关系"></a>2.3 父子进程关系</h3><p>在刚刚完成<code>fork()</code>后，父子进程间的data段、text段、堆、栈、环境变量、全局变量、宿主目录位置、进程工作目录位置、信号处理方式都完全一样。</p>
+<p>而进程PID、<code>fork()</code>返回值、各自父进程、进程创建时间、闹钟、未决信号集则不一样。</p>
+<p>而其相同的全局变量也并未完全是简单地拷贝，而是遵循“读时共享、写时复制”的原则。如文件描述符和mmap映射区。</p>
+<h3 id="2-4-循环创建n个子进程"><a href="#2-4-循环创建n个子进程" class="headerlink" title="2.4 循环创建n个子进程"></a>2.4 循环创建n个子进程</h3><p>这里要求循环创建n个子进程时，并且保证所有子进程均由最初父进程产生，也就是说所有子进程应该是兄弟关系。并可以控制特定子进程完成特定操作。</p>
+<figure class="highlight c"><figcaption><span>fork_loop.c</span></figcaption><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((pid = fork()) == <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (i == <span class="number">5</span>) &#123;</span><br><span class="line">        sleep(<span class="number">5</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"parent, and my PID is %d\n"</span>, getpid());</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        sleep(i);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%dth child, and my PID is %d, my parent's PID is %d\n"</span>, i + <span class="number">1</span>,</span><br><span class="line">               getpid(), getppid());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译执行，看看效果</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./fork_loop</span></span><br><span class="line">1th child, and my PID is 3669, my parent's PID is 3668</span><br><span class="line">2th child, and my PID is 3670, my parent's PID is 3668</span><br><span class="line">3th child, and my PID is 3671, my parent's PID is 3668</span><br><span class="line">4th child, and my PID is 3672, my parent's PID is 3668</span><br><span class="line">5th child, and my PID is 3673, my parent's PID is 3668</span><br><span class="line">parent, and my PID is 3668</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-wait-和waitpid"><a href="#3-wait-和waitpid" class="headerlink" title="3 wait()和waitpid()"></a>3 wait()和waitpid()</h2><h3 id="3-1-函数介绍"><a href="#3-1-函数介绍" class="headerlink" title="3.1 函数介绍"></a>3.1 函数介绍</h3><p>先介绍一下孤儿进程和僵尸进程。</p>
+<ul>
+<li>孤儿进程：父进程先于子进终止，子进程沦为“孤儿进程”，会被 init 进程领养。</li>
+<li>僵尸进程：子进程终止，父进程尚未对子进程进行回收，在此期间，子进程为“僵尸进程”。kill 对其无效。子进程的PCB资源会残留在内核中，浪费内存资源。</li>
+</ul>
+<p>所以在子进程终止之后，父进程应当承担回收子进程的责任，否则就可能产生故而进程和僵尸进程。</p>
+<p>可以在父进程中使用<code>wait()</code>或<code>waitpid()</code>来对子进程进行回收。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="comment">// 参数为一个传出参数，表示回收子进程的状态</span></span><br><span class="line"><span class="comment">// 可传入NULL，表示不关心子进程终止状态</span></span><br><span class="line"><span class="keyword">pid_t</span> wait(<span class="keyword">int</span> *wstatus);</span><br><span class="line"><span class="comment">// 参数1指定要回收的子进程，参数3可设置WNOHANG非阻塞</span></span><br><span class="line"><span class="keyword">pid_t</span> waitpid(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *wstatus, <span class="keyword">int</span> options);</span><br></pre></td></tr></table></figure>
+
+<p><code>wait()</code>函数将<strong>阻塞</strong>地回收<strong>任意一个子进程</strong>；执行成功时将返回回收进程的PID，失败返回-1；通过传出参数<code>wstatus</code>可以获得子进程终止状态。</p>
+<ul>
+<li>获取子进程正常终止值：<code>WIFEXITED(status)</code>为真的话，可调用 <code>WEXITSTATUS(status)</code>获得子进程的退出值。</li>
+<li>获取导致子进程异常终止信号：<code>WIFSIGNALED(status)</code>为真的话，可调用<code>WTERMSIG(status)</code>得到导致子进程异常终止的信号编号。</li>
+</ul>
+<p><code>waitpid()</code>则可以<strong>指定特定子进程</strong>进行回收，同时也可以设置非阻塞。返回值大于0时表示成功回收子进程，返回值就是对应PID；返回值为0时，表示设置了非阻塞且子进程未结束未能回收；返回值为-1时表程序执行出错。</p>
+<p>注意无论这两个函数一次都只能回收一个子进程，需要回收多个子进程需要使用循环。</p>
+<h3 id="3-2-使用实例"><a href="#3-2-使用实例" class="headerlink" title="3.2 使用实例"></a>3.2 使用实例</h3><p>在2.4节的程序中，子进程先于父进程终止，且父进程未对其回收，所以会产生僵尸进程。这里对其进行改进</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">pid_t</span> pid, wpid;</span><br><span class="line">    <span class="keyword">int</span> status, i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((pid = fork()) == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"fork error"</span>);</span><br><span class="line">        <span class="keyword">if</span> (pid == <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 子进程</span></span><br><span class="line">    <span class="keyword">if</span> (i &lt; <span class="number">5</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"It is a child process %d, and the parent process id is %d\n"</span>,</span><br><span class="line">               getpid(), getppid());</span><br><span class="line">        sleep(<span class="number">5</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"the child process going to die\n"</span>);</span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; <span class="comment">// 父进程</span></span><br><span class="line">        <span class="keyword">while</span>(i--)&#123;</span><br><span class="line">        wpid = wait(&amp;status);</span><br><span class="line">        <span class="keyword">if</span> (wpid == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"wait error"</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"It is a parent process %d\n"</span>, getpid());</span><br><span class="line">        <span class="keyword">if</span> (WIFEXITED(status))</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"child exit with %d\n"</span>, WEXITSTATUS(status));</span><br><span class="line">        <span class="keyword">if</span> (WIFSIGNALED(status))</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"child kill with signal %d\n"</span>, WTERMSIG(status));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译后执行，得到结果</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./<span class="built_in">wait</span></span></span><br><span class="line">It is a child process 3938, and the parent process id is 3937</span><br><span class="line">It is a child process 3939, and the parent process id is 3937</span><br><span class="line">It is a child process 3940, and the parent process id is 3937</span><br><span class="line">It is a child process 3941, and the parent process id is 3937</span><br><span class="line">It is a child process 3942, and the parent process id is 3937</span><br><span class="line">the child process going to die</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 0</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 1</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 2</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 3</span><br><span class="line">the child process going to die</span><br><span class="line">It is a parent process 3937</span><br><span class="line">child exit with 4</span><br></pre></td></tr></table></figure>
+
+<p>显然，所有子进程都已经被回收。</p>
+<h2 id="4-结束语"><a href="#4-结束语" class="headerlink" title="4 结束语"></a>4 结束语</h2><p>本篇文章先简单介绍了进程和PCB控制块的概念，因为这其实应该是操作系统的相关概念，所以在此不多做纠缠，只是有个简单印象，同时记录了相关常用命令<code>ps</code>和<code>kill</code>；然后介绍了用来创建子进程的<code>fork()</code>函数，已经实现了一个循环创建特定个数子进程的小demo；最后介绍了用以回收子进程的<code>wait()</code>和<code>waitpid()</code>函数，并对之前的小demo做了改进，使其不再产生僵尸进程。</p>
+<p><code>fork()</code>函数非常重要，在后续文章其他函数的学习中，还将多次使用其实现多进程程序的编写。</p>
+]]></content>
+  </entry>
+  <entry>
     <title>Linux系统编程（四）：utmp文件和who命令的实现</title>
     <url>/2020/02/23/apue-hm04/</url>
     <content><![CDATA[<p>本篇文章将会介绍<code>who</code>命令的工作原理，介绍了<code>utmp</code>文件和相应结构体，以及我们可以如何用简单代码将其实现，重点在如何查询和了解相关调用的过程。</p>
