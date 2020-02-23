@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/favicon16.png?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="在该系列的上一篇中，介绍了文件概念和相关的诸多函数，但实例仅有两三个。本篇文章不再专门介绍函数，而是先承接上文，记录一下通过stat()函数来实现ls -l命令。 1 ls -l命令的作用ls -l命令用于查看当前或指定目录下文件的详细信息，使用效果如下 1234567891011121314151617$ ls -ltotal 124-rwxrwxrwx 1 choupin choupin 15">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程（三）：stat函数和ls -l命令的实现">
+<meta property="og:url" content="http://yoursite.com/2020/02/23/apue-hm03/index.html">
+<meta property="og:site_name" content="Chou Bin&#39;s Blog">
+<meta property="og:description" content="在该系列的上一篇中，介绍了文件概念和相关的诸多函数，但实例仅有两三个。本篇文章不再专门介绍函数，而是先承接上文，记录一下通过stat()函数来实现ls -l命令。 1 ls -l命令的作用ls -l命令用于查看当前或指定目录下文件的详细信息，使用效果如下 1234567891011121314151617$ ls -ltotal 124-rwxrwxrwx 1 choupin choupin 15">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/stat_st_mode.png">
+<meta property="article:published_time" content="2020-02-23T15:07:21.807Z">
+<meta property="article:modified_time" content="2020-02-23T15:06:30.997Z">
+<meta property="article:author" content="Chou Bin">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/stat_st_mode.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/23/apue-hm03/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Linux系统编程（三）：stat函数和ls -l命令的实现 | Chou Bin's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Chou Bin's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-top">
+    <a href="/top/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-signal"></i> <br />热度榜</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/23/apue-hm03/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Chou Bin">
+      <meta itemprop="description" content="慢就是快，快就是慢">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Chou Bin's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Linux系统编程（三）：stat函数和ls -l命令的实现
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-23 23:07:21" itemprop="dateCreated datePublished" datetime="2020-02-23T23:07:21+08:00">2020-02-23</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a></span>
+
+                
+                
+                  ，
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Linux系统编程</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/02/23/apue-hm03/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/02/23/apue-hm03/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2020/02/23/apue-hm03/" class="leancloud_visitors" data-flag-title="Linux系统编程（三）：stat函数和ls -l命令的实现">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">热度 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+                 <span>℃</span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">37k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">1:02</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a href="https://choubin.site/2020/02/23/apue-hm02/" target="_blank" rel="noopener">在该系列的上一篇中</a>，介绍了文件概念和相关的诸多函数，但实例仅有两三个。本篇文章不再专门介绍函数，而是先承接上文，记录一下通过<code>stat()</code>函数来实现ls -l命令。</p>
+<h2 id="1-ls-l命令的作用"><a href="#1-ls-l命令的作用" class="headerlink" title="1 ls -l命令的作用"></a>1 ls -l命令的作用</h2><p><code>ls -l</code>命令用于查看当前或指定目录下文件的详细信息，使用效果如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ls -l</span></span><br><span class="line">total 124</span><br><span class="line">-rwxrwxrwx 1 choupin choupin 15768 Feb 15 22:19 cp01</span><br><span class="line">-rw-rw-rw- 1 choupin choupin   987 Feb 15 22:19 cp01.c</span><br><span class="line">-rw-r--r-- 1 choupin choupin   987 Feb 23 18:49 cp02.c</span><br><span class="line">-rwxrwxrwx 1 choupin choupin 11136 Feb 21 14:05 fork_loop</span><br><span class="line">-rw-rw-rw- 1 choupin choupin   353 Feb 21 14:05 fork_loop.c</span><br><span class="line">-rwxrwxrwx 1 choupin choupin 11720 Feb 18 14:03 ls01</span><br><span class="line">-rw-rw-rw- 1 choupin choupin   483 Feb 18 14:03 ls01.c</span><br><span class="line">-rwxrwxrwx 1 choupin choupin 18256 Feb 21 14:05 ls_l</span><br><span class="line">-rw-rw-rw- 1 choupin choupin  2681 Feb 19 17:05 ls_l.c</span><br><span class="line">-rwxrwxrwx 1 choupin choupin 15808 Feb 17 17:56 lseek</span><br><span class="line">-rw-rw-rw- 1 choupin choupin   824 Feb 17 17:55 lseek.c</span><br><span class="line">-rw-rw-rw- 1 choupin choupin   164 Feb 20 17:23 makefile</span><br><span class="line">drwxrwxrwx 1 choupin choupin   512 Feb 18 13:56 testls</span><br><span class="line">-rw-r--r-- 1 choupin choupin   229 Feb 17 17:55 testlseek</span><br><span class="line">-rw-r--r-- 1 choupin choupin   229 Feb 17 17:56 testlseek.txt</span><br></pre></td></tr></table></figure>
+
+<p>其中每行包含7个字段，分别</p>
+<ul>
+<li>模式mode：第一个字符表示文件类型，后面表示文件访问权限</li>
+<li>链接数links：即文件被引用的次数</li>
+<li>文件所有者owner：用户名</li>
+<li>组group：文件所有者所在的组</li>
+<li>大小size：以字节bytes为单位</li>
+<li>最后修改时间last-modified：较新文件会列出月日时分，较老文件只列出月日年</li>
+<li>文件名name：最长为256个字节</li>
+</ul>
+<h2 id="2-ls-l-如何工作"><a href="#2-ls-l-如何工作" class="headerlink" title="2 ls -l 如何工作"></a>2 ls -l 如何工作</h2><p>上篇文章中，我们已经实现过不带选项的ls命令，两者的区别就在于一个只简单地输出文件名，而另一个则需要输出文件的详细信息。</p>
+<p>那么文件信息如何获取呢？答案是使用之前已经介绍过的<code>stat()</code>函数，<a href="https://choubin.site/2020/02/23/apue-hm02/" target="_blank" rel="noopener">关于该函数的介绍见上篇文章</a>。</p>
+<p>所以其原理就是：</p>
+<ol>
+<li>打开当前或给定目录</li>
+<li>循环读取目录中的文件，获取文件名</li>
+<li>通过文件名来调用<code>stat()</code>函数来获取文件的详细信息</li>
+<li>按照指定格式来输出文件信息。</li>
+</ol>
+<p>第1步和第2步已经在之前ls的实现中有过练习，显然这里的主要工作就是通过<code>stat()</code>获取文件信息和按照指定格式来输出信息。</p>
+<h2 id="3-获取文件信息"><a href="#3-获取文件信息" class="headerlink" title="3 获取文件信息"></a>3 获取文件信息</h2><p><code>stat()</code>的返回值是一个<code>struct stat</code>，这里需要分析一下如何从这个结构体中获取我们要在ls -l命令中打印的信息，结构体信息摘录于下。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="comment">// 一个用来存放文件状态的结构体</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">stat</span> &#123;</span></span><br><span class="line">    <span class="keyword">dev_t</span>     st_dev;         <span class="comment">/* ID of device containing file */</span></span><br><span class="line">	<span class="keyword">ino_t</span>     st_ino;         <span class="comment">/* Inode number */</span></span><br><span class="line">	<span class="keyword">mode_t</span>    st_mode;        <span class="comment">/* File type and mode */</span></span><br><span class="line">	<span class="keyword">nlink_t</span>   st_nlink;       <span class="comment">/* Number of hard links */</span></span><br><span class="line">	<span class="keyword">uid_t</span>     st_uid;         <span class="comment">/* User ID of owner */</span></span><br><span class="line">	<span class="keyword">gid_t</span>     st_gid;         <span class="comment">/* Group ID of owner */</span></span><br><span class="line">	<span class="keyword">dev_t</span>     st_rdev;        <span class="comment">/* Device ID (if special file) */</span></span><br><span class="line">	<span class="keyword">off_t</span>     st_size;        <span class="comment">/* Total size, in bytes */</span></span><br><span class="line">	<span class="keyword">blksize_t</span> st_blksize;     <span class="comment">/* Block size for filesystem I/O */</span></span><br><span class="line">	<span class="keyword">blkcnt_t</span>  st_blocks;      <span class="comment">/* Number of 512B blocks allocated */</span></span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">st_atim</span>;</span>  <span class="comment">/* Time of last access */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">st_mtim</span>;</span>  <span class="comment">/* Time of last modification */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">st_ctim</span>;</span>  <span class="comment">/* Time of last status change */</span></span><br><span class="line"></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">define</span> st_atime st_atim.tv_sec      <span class="comment">/* Backward compatibility */</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">define</span> st_mtime st_mtim.tv_sec</span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">define</span> st_ctime st_ctim.tv_sec</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-1-获取mode信息"><a href="#3-1-获取mode信息" class="headerlink" title="3.1 获取mode信息"></a>3.1 获取mode信息</h3><p>需要从成员<code>st_mode</code>中获取，其类型<code>mode_t</code>在我的系统中定义就是<code>unsigned int</code>。但在命令ls -l的输出应该是类似<code>-rw-rw-r--</code>的10个字符的字符串。这之间如何转换呢？</p>
+<p>其实这些信息是以位图的方式放进了这个整数类型的16位中。</p>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/stat_st_mode.png" alt=""></p>
+<p>其中前4位用作文件类型，最多可标识16种类型，目前已有7种文件类型。</p>
+<p>接下来3位是文件特殊属性，分别是set-user-ID，set-group-ID和sticky位，1表示具有该属性，0表示没有。</p>
+<p>最后9位表示许可权限，分为3组，分别对应文件所有者、同组用户、其他用户的读写执行权限。同样有的话为1，没有的话为0。</p>
+<p>既然是位图，那么必然可以通过掩码来取得其信息。如关于文件类型，在<code>&lt;sys/stat.h&gt;</code>中定义了掩码<code>S_IFMT</code>来取得文件类型信息，用法如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span> (sb.st_mode &amp; S_IFMT) &#123;</span><br><span class="line">	<span class="keyword">case</span> S_IFBLK:  <span class="built_in">printf</span>(<span class="string">"block device\n"</span>);            <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> S_IFCHR:  <span class="built_in">printf</span>(<span class="string">"character device\n"</span>);        <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> S_IFDIR:  <span class="built_in">printf</span>(<span class="string">"directory\n"</span>);               <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> S_IFIFO:  <span class="built_in">printf</span>(<span class="string">"FIFO/pipe\n"</span>);               <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> S_IFLNK:  <span class="built_in">printf</span>(<span class="string">"symlink\n"</span>);                 <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> S_IFREG:  <span class="built_in">printf</span>(<span class="string">"regular file\n"</span>);            <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> S_IFSOCK: <span class="built_in">printf</span>(<span class="string">"socket\n"</span>);                  <span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">default</span>:       <span class="built_in">printf</span>(<span class="string">"unknown?\n"</span>);                <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而掩码<code>S_IFMT</code>以及表示相应文件类型的<code>S_IDBLK</code>等实际上是一些八进制位数的宏。</p>
+<p>除了直接使用掩码来判断，更简单的方法是使用定义好的比较宏</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> S_ISDIR(m)	(((m)&amp;(0170000)) == (0040000))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> S_ISCHR(m)	(((m)&amp;(0170000)) == (0020000))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> S_ISBLK(m)	(((m)&amp;(0170000)) == (0060000))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> S_ISREG(m)	(((m)&amp;(0170000)) == (0100000))</span></span><br><span class="line"><span class="comment">// 判断一个文件是否为目录</span></span><br><span class="line"><span class="keyword">if</span>(S_ISDIR(info.st_mode))</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"this is a directory\n"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>而许可权限的信息同样可以通过相应的掩码来获取。</p>
+<p>在获取之后这些信息之后，即可将其转换为对应的字符串类似<code>drwxrwxr--</code>。</p>
+<h3 id="3-2-获取链接数、文件大小和时间信息"><a href="#3-2-获取链接数、文件大小和时间信息" class="headerlink" title="3.2 获取链接数、文件大小和时间信息"></a>3.2 获取链接数、文件大小和时间信息</h3><p>链接信息即保存在成员<code>st_nlinks</code>里，直接打印即可。</p>
+<p>文件大小信息即保存在成员<code>st_size</code>里，同样直接打印即可。</p>
+<p>时间信息即保存在成员<code>st_mtime</code>里，需要注意的是这里需要使用<code>ctime()</code>函数来将其转换成要求的格式来打印。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="comment">// 返回的是类似"Wed Jun 30 21:49:08 1993\n"一个字符串</span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">ctime</span><span class="params">(<span class="keyword">const</span> <span class="keyword">time_t</span> *timep)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-获取所有者和组名信息"><a href="#3-3-获取所有者和组名信息" class="headerlink" title="3.3 获取所有者和组名信息"></a>3.3 获取所有者和组名信息</h3><p>首先需要知道Linux系统的用户信息保存在<code>/etc/passwd</code>中，但这个文件又没有包括所有的用户，在一些网络计算机系统中，所有主机通过NIS来进行身份验证，本地只保存所有用户的一个自己以备离线操作。</p>
+<p>这里可以通过<code>getwuid()</code>来获取完整的用户列表，该调用会自动选择从<code>/etc/passwd</code>还是NIS中获取信息，提高了程序的可移植性。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="comment">// 接受用户的uid作为参数，返回指针指向的结构体中包含了用户信息</span></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwuid</span><span class="params">(<span class="keyword">uid_t</span> uid)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">passwd</span> &#123;</span></span><br><span class="line">	<span class="keyword">char</span>   *pw_name;       <span class="comment">/* username */</span></span><br><span class="line">	<span class="keyword">char</span>   *pw_passwd;     <span class="comment">/* user password */</span></span><br><span class="line">	<span class="keyword">uid_t</span>   pw_uid;        <span class="comment">/* user ID */</span></span><br><span class="line">	<span class="keyword">gid_t</span>   pw_gid;        <span class="comment">/* group ID */</span></span><br><span class="line">	<span class="keyword">char</span>   *pw_gecos;      <span class="comment">/* user information */</span></span><br><span class="line">	<span class="keyword">char</span>   *pw_dir;        <span class="comment">/* home directory */</span></span><br><span class="line">	<span class="keyword">char</span>   *pw_shell;      <span class="comment">/* shell program */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>所以可以调用<code>getpwuid()</code>来获取用户信息，打印用户名称。另外还有一种可能是，文件所有者已经搬走了，账号被删除，但这个文件还在，此时该函数将返回NULL。所以这里还需要检查返回值，而不能直接读取，否则可能出现段错误。</p>
+<p>类似的使用<code>getgrgid()</code>来获取组列表，用法大同小异</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="function">struct group *<span class="title">getgrgid</span><span class="params">(<span class="keyword">gid_t</span> gid)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">group</span> &#123;</span></span><br><span class="line">	<span class="keyword">char</span>   *gr_name;        <span class="comment">/* group name */</span></span><br><span class="line">	<span class="keyword">char</span>   *gr_passwd;      <span class="comment">/* group password */</span></span><br><span class="line">	<span class="keyword">gid_t</span>   gr_gid;         <span class="comment">/* group ID */</span></span><br><span class="line">	<span class="keyword">char</span>  **gr_mem;         <span class="comment">/* NULL-terminated array of pointers</span></span><br><span class="line"><span class="comment">                                to names of group members */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>该函数也是有可能返回NULL的。</p>
+<h2 id="4-实现代码"><a href="#4-实现代码" class="headerlink" title="4 实现代码"></a>4 实现代码</h2><figure class="highlight c"><figcaption><span>ls-l.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;dirent.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 用于完成ls -l功能的函数</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_ls</span><span class="params">(<span class="keyword">char</span>[])</span></span>;</span><br><span class="line"><span class="comment">// 获取文件信息并打印的函数</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dostat</span><span class="params">(<span class="keyword">char</span>*, <span class="keyword">char</span>*)</span></span>;</span><br><span class="line"><span class="comment">// 将st_mode转换为字符串的函数</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mode_to_letters</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">char</span>[])</span></span>;</span><br><span class="line"><span class="comment">// 获取用户名的函数</span></span><br><span class="line"><span class="function"><span class="keyword">char</span>* <span class="title">uid_to_name</span><span class="params">(<span class="keyword">uid_t</span>)</span></span>;</span><br><span class="line"><span class="comment">// 获取用户组名的函数</span></span><br><span class="line"><span class="function"><span class="keyword">char</span>* <span class="title">gid_to_name</span><span class="params">(<span class="keyword">gid_t</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 判断参数个数</span></span><br><span class="line">    <span class="keyword">if</span> (argc == <span class="number">1</span>)</span><br><span class="line">        do_ls(<span class="string">"."</span>);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="comment">// 循环对各个参数的目录进行操作</span></span><br><span class="line">        <span class="keyword">while</span> (--argc) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"%s:\n"</span>, *++argv);</span><br><span class="line">            do_ls(*argv);</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_ls</span><span class="params">(<span class="keyword">char</span> dirname[])</span> </span>&#123;</span><br><span class="line">    DIR* dir_ptr;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">dirent</span>* <span class="title">direntp</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((dir_ptr = opendir(dirname)) == <span class="literal">NULL</span>)</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"ls:cannot open %s\n"</span>, dirname);</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">while</span> ((direntp = readdir(dir_ptr)) != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="keyword">char</span> *dname = direntp-&gt;d_name;</span><br><span class="line">            <span class="comment">// 这里过滤一下“."和".."</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">strcmp</span>(dname, <span class="string">"."</span>) &amp;&amp; <span class="built_in">strcmp</span>(dname, <span class="string">".."</span>)) &#123;</span><br><span class="line">                <span class="keyword">char</span> path[<span class="number">256</span>];</span><br><span class="line">                <span class="comment">// 如果这里不做拼接的话，将无法获取非当前目录下的文件信息</span></span><br><span class="line">                <span class="built_in">sprintf</span>(path, <span class="string">"%s%s"</span>, dirname, dname);</span><br><span class="line">                dostat(path, dname);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        closedir(dir_ptr);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">dostat</span><span class="params">(<span class="keyword">char</span>* filename, <span class="keyword">char</span>* name)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">stat</span> <span class="title">info</span>;</span></span><br><span class="line">    <span class="keyword">if</span> (stat(filename, &amp;info) == <span class="number">-1</span>)</span><br><span class="line">        perror(filename);</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">char</span> modestr[<span class="number">11</span>];</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">stat</span>* <span class="title">info_ptr</span> = &amp;<span class="title">info</span>;</span></span><br><span class="line">        mode_to_letters(info_ptr-&gt;st_mode, modestr);</span><br><span class="line"></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%s"</span>, modestr);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%4d "</span>, (<span class="keyword">int</span>)info_ptr-&gt;st_nlink);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%-8s"</span>, uid_to_name(info_ptr-&gt;st_uid));</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%-8s "</span>, gid_to_name(info_ptr-&gt;st_gid));</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%8ld "</span>, (<span class="keyword">long</span>)info_ptr-&gt;st_size);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%.12s "</span>, <span class="number">4</span> + ctime(&amp;info_ptr-&gt;st_ctime));</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%s\n"</span>, name);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mode_to_letters</span><span class="params">(<span class="keyword">int</span> mode, <span class="keyword">char</span> str[])</span> </span>&#123;</span><br><span class="line">    <span class="built_in">strcpy</span>(str, <span class="string">"----------"</span>);</span><br><span class="line">    <span class="keyword">if</span> (S_ISDIR(mode)) str[<span class="number">0</span>] = <span class="string">'d'</span>;</span><br><span class="line">    <span class="keyword">if</span> (S_ISCHR(mode)) str[<span class="number">0</span>] = <span class="string">'c'</span>;</span><br><span class="line">    <span class="keyword">if</span> (S_ISBLK(mode)) str[<span class="number">0</span>] = <span class="string">'b'</span>;</span><br><span class="line">	<span class="comment">// 通过掩码来获取文件权限并将其转换对应字符</span></span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IRUSR) str[<span class="number">1</span>] = <span class="string">'r'</span>;</span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IWUSR) str[<span class="number">2</span>] = <span class="string">'w'</span>;</span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IXUSR) str[<span class="number">3</span>] = <span class="string">'x'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IRGRP) str[<span class="number">4</span>] = <span class="string">'r'</span>;</span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IWGRP) str[<span class="number">5</span>] = <span class="string">'w'</span>;</span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IXGRP) str[<span class="number">6</span>] = <span class="string">'x'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IROTH) str[<span class="number">7</span>] = <span class="string">'r'</span>;</span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IWOTH) str[<span class="number">8</span>] = <span class="string">'w'</span>;</span><br><span class="line">    <span class="keyword">if</span> (mode &amp; S_IXOTH) str[<span class="number">9</span>] = <span class="string">'x'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">char</span>* <span class="title">uid_to_name</span><span class="params">(<span class="keyword">uid_t</span> uid)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">passwd</span>* <span class="title">pw_ptr</span>;</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">char</span> uname[<span class="number">10</span>];</span><br><span class="line">    <span class="keyword">if</span> ((pw_ptr = getpwuid(uid)) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="comment">// 若没有该用户则打印uid</span></span><br><span class="line">        <span class="built_in">sprintf</span>(uname, <span class="string">"%d"</span>, uid);</span><br><span class="line">        <span class="keyword">return</span> uname;</span><br><span class="line">    &#125; <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> pw_ptr-&gt;pw_name;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">char</span>* <span class="title">gid_to_name</span><span class="params">(<span class="keyword">gid_t</span> gid)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">group</span>* <span class="title">grp_ptr</span>;</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">char</span> gname[<span class="number">10</span>];</span><br><span class="line">    <span class="keyword">if</span> ((grp_ptr = getgrgid(gid)) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="comment">// 若没有该组则打印gid</span></span><br><span class="line">        <span class="built_in">sprintf</span>(gname, <span class="string">"%d"</span>, gid);</span><br><span class="line">        <span class="keyword">return</span> gname;</span><br><span class="line">    &#125; <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> grp_ptr-&gt;gr_name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将其编译并进行测试</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> gcc ls_l.c -o ls_l</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ./ls_l  /</span></span><br><span class="line">/:</span><br><span class="line">drwxr-xr-x   1 root    root          512 Jan 11 20:23 bin</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 boot</span><br><span class="line">drwxr-xr-x   1 root    root          512 Feb 23 13:13 dev</span><br><span class="line">drwxr-xr-x   1 root    root          512 Feb 23 13:13 etc</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:49 home</span><br><span class="line">-rwxr-xr-x   1 root    root       591344 Jan  1 08:00 init</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 20 15:22 lib</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 lib64</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 media</span><br><span class="line">drwxr-xr-x   1 root    root          512 Feb 23 13:13 mnt</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 opt</span><br><span class="line">dr-xr-xr-x  45 root    root            0 Feb 23 13:13 proc</span><br><span class="line">drwx------   1 root    root          512 Feb 11 10:08 root</span><br><span class="line">drwxr-xr-x   1 root    root          512 Feb 23 13:13 run</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 19 20:12 sbin</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 snap</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 srv</span><br><span class="line">dr-xr-xr-x  12 root    root            0 Feb 23 13:13 sys</span><br><span class="line">drwxrwxrwx   1 root    root          512 Feb 23 22:36 tmp</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 usr</span><br><span class="line">drwxr-xr-x   1 root    root          512 Dec 10 10:47 var</span><br></pre></td></tr></table></figure>
+
+<p>实现完成。</p>
+<h2 id="5-结束语"><a href="#5-结束语" class="headerlink" title="5 结束语"></a>5 结束语</h2><p>本篇文章主要通过了实现<code>ls -l</code>来练习<code>stat()</code>相关函数以及<code>struct stat</code>的使用，熟悉了如何获取文件详细信息，并将其转换成我们需要的格式。在文件mode信息获取中，使用到的关于掩码的宏较多，通过这次练习即使记不住也有个大概印象，下次再需使用时也可以通过查询相关帮助信息来完成编写。</p>
+<p>本篇文章主要内容依然总结自《Unix\Linux编程实践教程》一书，下一篇依然会是编程练习，记录<code>who</code>命令的实现。</p>
+
+      
+    </div>
+
+    
+      
+
+<div class="post-body">
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm02\" rel="bookmark">Linux 系统编程（二）：文件、文件操作函数和相关实例</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\15\apue-hm01\" rel="bookmark">Linux 系统编程（一）：C/C++程序编译与gdb调试</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm04\" rel="bookmark">Linux系统编程（四）：utmp文件和who命令的实现</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\01\02\STL2-AlloctorAndCtorDtor\" rel="bookmark">TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\01\01\STL1-TraitsAndType-traitsTemplate\" rel="bookmark">TinySTL实现项目（一）：traits 技巧与 type_traits 模板</a></div>
+      
+    </li>
+  
+  </ul>
+</div>
+
+
+    
+
+    
+    
+    
+
+    
+      <div>
+        <div>
+  
+    <div style="text-align:center;color:#bfbfbf;font-size:16px;">
+      <span>-------- 本文结束 </span>
+      <i class="fa fa-paw"></i>
+      <span> 感谢阅读 --------</span>
+    </div>
+  
+</div>
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>给我加块红烧肉吧</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.jpg" alt="Chou Bin 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Chou Bin 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <!-- JS库 clipboard 拷贝内容到粘贴板-->
+<script src="https://cdn.bootcss.com/clipboard.js/2.0.1/clipboard.min.js"></script>
+
+<!-- JS库 sweetalert 显示提示信息-->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<ul class="post-copyright">
+  <!-- 本文标题 -->
+  <li>
+    <strong>本文标题： </strong>
+    Linux系统编程（三）：stat函数和ls -l命令的实现
+  </li>
+
+  <!-- 本文作者 -->
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>
+    Chou Bin
+  </li>
+
+  <!-- 创建时间 -->
+  <li>
+    <strong>创建时间： </strong>
+    2020年02月23日 - 23时02分
+  </li>
+
+  <!-- 修改时间 -->
+  <li>
+    <strong>修改时间： </strong>
+    2020年02月23日 - 23时02分
+  </li>
+
+  <!-- 引用链接 -->
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://yoursite.com/2020/02/23/apue-hm03/" title="Linux系统编程（三）：stat函数和ls -l命令的实现"
+      >http://yoursite.com/2020/02/23/apue-hm03/</a
+    >
+    <span class="copy-path" title="点击复制引用链接"
+      ><i
+        style="cursor: pointer"
+        class="fa fa-clipboard"
+        data-clipboard-text="[Chou Bin's Blog | Linux系统编程（三）：stat函数和ls -l命令的实现](http://yoursite.com/2020/02/23/apue-hm03/)"
+        aria-label="复制成功"
+      ></i
+    ></span>
+  </li>
+
+  <!-- 版权声明 -->
+  <li class="post-copyright-license">
+    <strong
+      >版权声明：
+    </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+<script>
+  var clipboard = new ClipboardJS(".fa-clipboard");
+  clipboard.on("success", function(target) {
+    var message = document.createElement("div");
+    message.innerHTML =
+      '<i class="fa fa-check-circle message-icon"></i><span class="message-content">' +
+      target.trigger.getAttribute("aria-label") +
+      "</span>";
+    swal({
+      content: message,
+      className: "copy-success-message",
+      timer: 1000,
+      button: false
+    });
+  });
+</script>
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C/" rel="tag"><i class="fa fa-tags"></i> C++</a>
+          
+            <a href="/tags/Linux/" rel="tag"><i class="fa fa-tags"></i> Linux</a>
+          
+        </div>
+      
+
+      
+      
+        <div class="post-widgets">
+        
+          <div class="wp_rating">
+            <div id="wpac-rating"></div>
+          </div>
+        
+
+        
+
+        
+        </div>
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/02/23/apue-hm04/" rel="prev" title="Linux系统编程（四）：utmp文件和who命令的实现">
+                <i class="fa fa-chevron-left"></i> Linux系统编程（四）：utmp文件和who命令的实现
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/02/23/apue-hm02/" rel="next" title="Linux 系统编程（二）：文件、文件操作函数和相关实例">
+                Linux 系统编程（二）：文件、文件操作函数和相关实例 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <a href="/">
+                <img class="site-author-image" itemprop="image"
+                  src="/images/avatar.jpg"
+                  alt="Chou Bin" />
+              </a>
+            
+              <p class="site-author-name" itemprop="name">Chou Bin</p>
+              <p class="site-description motion-element" itemprop="description">慢就是快，快就是慢</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">11</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/lammmmmmm" target="_blank" title="GitHub" rel="external nofollow"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:ozc236@163.com" target="_blank" title="E-Mail" rel="external nofollow"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://weibo.com/3817442698" target="_blank" title="Weibo" rel="external nofollow"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+            <div class="cc-license motion-element" itemprop="license">
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" target="_blank" rel="external nofollow">
+                <img src="/images/cc-by-nc-sa.svg" alt="Creative Commons" />
+              </a>
+            </div>
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://lesylin.com" title="Lesy" target="_blank">Lesy</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-ls-l命令的作用"><span class="nav-text">1 ls -l命令的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-ls-l-如何工作"><span class="nav-text">2 ls -l 如何工作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-获取文件信息"><span class="nav-text">3 获取文件信息</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-获取mode信息"><span class="nav-text">3.1 获取mode信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-获取链接数、文件大小和时间信息"><span class="nav-text">3.2 获取链接数、文件大小和时间信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-获取所有者和组名信息"><span class="nav-text">3.3 获取所有者和组名信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-实现代码"><span class="nav-text">4 实现代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-结束语"><span class="nav-text">5 结束语</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script
+  async
+  src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"
+></script>
+<div class="copyright">&copy; 2019 – <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Chou Bin</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点总字数：</span>
+    
+    <span title="站点总字数">127k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    
+    <span title="站点阅读时长">3:32</span>
+  
+</div>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      你是小破站的第 <span class="busuanzi-value" id="busuanzi_value_site_uv"></span> 为访客
+    </span>
+  
+
+  
+    <span class="site-pv">
+      历经 <span class="busuanzi-value" id="busuanzi_value_site_pv"></span> 次回眸才与你相遇
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  
+  
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(function (item) {
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz',
+        appKey: 'rr9HWuw87tMKsDi665PptoeR',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        meta:guest,
+        pageSize:'10' || 10,
+        visitor: false
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('body');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('3');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz",
+                'X-LC-Key': "rr9HWuw87tMKsDi665PptoeR",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+  
+  <script type="text/javascript">
+  wpac_init = window.wpac_init || [];
+  wpac_init.push({widget: 'Rating', id: 22562,
+    el: 'wpac-rating',
+    color: 'fadb14'
+  });
+  (function() {
+    if ('WIDGETPACK_LOADED' in window) return;
+    WIDGETPACK_LOADED = true;
+    var mc = document.createElement('script');
+    mc.type = 'text/javascript';
+    mc.async = true;
+    mc.src = '//embed.widgetpack.com/widget.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+  })();
+  </script>
+
+
+  
+  
+  
+  <script src="/lib/pangu/dist/pangu.min.js?v=3.3"></script>
+  <script type="text/javascript">pangu.spacingPage();</script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+  <script async src="/js/cursor/fireworks.js"></script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+
+
+ 
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-precise-range-plugin@1.3.0/moment-precise-range.min.js"></script>
+<script>
+  function timer() {
+    var ages = moment.preciseDiff(moment(),moment(20191221,"YYYYMMDD"));
+    ages = ages.replace(/years?/, "年");
+    ages = ages.replace(/months?/, "月");
+    ages = ages.replace(/days?/, "天");
+    ages = ages.replace(/hours?/, "小时");
+    ages = ages.replace(/minutes?/, "分");
+    ages = ages.replace(/seconds?/, "秒");
+    ages = ages.replace(/\d+/g, '<span style="color:#1890ff">$&</span>');
+    div.innerHTML = `我已在此等候你 ${ages}`;
+  }
+  var div = document.createElement("div");
+  //插入到copyright之后
+  var copyright = document.querySelector(".copyright");
+  document.querySelector(".footer-inner").insertBefore(div, copyright.nextSibling);
+  timer();
+  setInterval("timer()",1000)
+</script>
+
+
+ 
+<script>
+  var OriginTitile = document.title;
+  var titleTime;
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      document.title = "(つェ⊂) 看不见我看不见我~" + OriginTitile;
+      clearTimeout(titleTime);
+    } else {
+      document.title = "(*´∇｀*) 咦，被你发现了~" + OriginTitile;
+      titleTime = setTimeout(function() {
+        document.title = OriginTitile;
+      }, 2000);
+    }
+  });
+</script>
+
+</body>
+</html>
+
+
+
+  <script src="/js/wobblewindow.js"></script>
+  <script>
+    //只在桌面版网页启用特效
+    if( window.innerWidth > 768  ){
+      $(document).ready(function () {
+        
+          $('#header').wobbleWindow({
+            radius: 65,
+            movementTop: false,
+            movementLeft: false,
+            movementRight: false,
+            debug: false,
+          });
+        
+
+        
+
+        
+          $('#footer').wobbleWindow({
+            radius: 65,
+            movementBottom: false,
+            movementLeft: false,
+            movementRight: false,
+            position: 'absolute',
+            debug: false,
+          });
+        
+      });
+    }
+  </script>
