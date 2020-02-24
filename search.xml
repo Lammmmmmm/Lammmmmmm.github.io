@@ -103,6 +103,14 @@
 <h2 id="4-结束语"><a href="#4-结束语" class="headerlink" title="4 结束语"></a>4 结束语</h2><p>本篇文章先简单介绍了进程和PCB控制块的概念，因为这其实应该是操作系统的相关概念，所以在此不多做纠缠，只是有个简单印象，同时记录了相关常用命令<code>ps</code>和<code>kill</code>；然后介绍了用来创建子进程的<code>fork()</code>函数，已经实现了一个循环创建特定个数子进程的小demo；最后介绍了用以回收子进程的<code>wait()</code>和<code>waitpid()</code>函数，并对之前的小demo做了改进，使其不再产生僵尸进程。</p>
 <p><code>fork()</code>函数非常重要，在后续文章其他函数的学习中，还将多次使用其实现多进程程序的编写。</p>
 ]]></content>
+      <categories>
+        <category>C++</category>
+        <category>Linux系统编程</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Linux</tag>
+      </tags>
   </entry>
   <entry>
     <title>Linux系统编程（四）：utmp文件和who命令的实现</title>
