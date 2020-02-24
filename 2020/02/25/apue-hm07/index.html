@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/favicon16.png?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="本篇文章主要记录了共享内存映射的概念、原理，以及使用mmap()来建立匿名映射、有名映射的方法，以及通过该种方法实现进程间通信。 本篇文章许多概念相关知识参照于本篇文章。 1 共享内存概念共享内存可以说是最有用的进程间通信方式，也是最快的IPC形式， 因为进程可以直接读写内存，而不需要任何数据的拷贝。 对于像管道和消息队列等通信方式，则需要在内核和用户空间进行 两次运行级别切换（系统调用导致保护和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程（七）：使用mmap在进程间通信">
+<meta property="og:url" content="http://yoursite.com/2020/02/25/apue-hm07/index.html">
+<meta property="og:site_name" content="Chou Bin&#39;s Blog">
+<meta property="og:description" content="本篇文章主要记录了共享内存映射的概念、原理，以及使用mmap()来建立匿名映射、有名映射的方法，以及通过该种方法实现进程间通信。 本篇文章许多概念相关知识参照于本篇文章。 1 共享内存概念共享内存可以说是最有用的进程间通信方式，也是最快的IPC形式， 因为进程可以直接读写内存，而不需要任何数据的拷贝。 对于像管道和消息队列等通信方式，则需要在内核和用户空间进行 两次运行级别切换（系统调用导致保护和">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E4%BC%A0%E7%BB%9F%E6%96%87%E4%BB%B6%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F.jpg">
+<meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E6%98%A0%E5%B0%84%E6%96%B9%E5%BC%8F.jpg">
+<meta property="og:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E6%98%A0%E5%B0%84%E6%96%B9%E5%BC%8F.jpg">
+<meta property="article:published_time" content="2020-02-24T16:17:43.169Z">
+<meta property="article:modified_time" content="2020-02-24T16:16:53.955Z">
+<meta property="article:author" content="Chou Bin">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E4%BC%A0%E7%BB%9F%E6%96%87%E4%BB%B6%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/25/apue-hm07/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Linux系统编程（七）：使用mmap在进程间通信 | Chou Bin's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Chou Bin's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-top">
+    <a href="/top/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-signal"></i> <br />热度榜</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/25/apue-hm07/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Chou Bin">
+      <meta itemprop="description" content="慢就是快，快就是慢">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Chou Bin's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Linux系统编程（七）：使用mmap在进程间通信
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-25 00:17:43" itemprop="dateCreated datePublished" datetime="2020-02-25T00:17:43+08:00">2020-02-25</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a></span>
+
+                
+                
+                  ，
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Linux系统编程</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/02/25/apue-hm07/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/02/25/apue-hm07/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2020/02/25/apue-hm07/" class="leancloud_visitors" data-flag-title="Linux系统编程（七）：使用mmap在进程间通信">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">热度 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+                 <span>℃</span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">33k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">54 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本篇文章主要记录了共享内存映射的概念、原理，以及使用<code>mmap()</code>来建立匿名映射、有名映射的方法，以及通过该种方法实现进程间通信。</p>
+<p><a href="https://www.jianshu.com/p/472ea35448ca" target="_blank" rel="noopener">本篇文章许多概念相关知识参照于本篇文章</a>。</p>
+<h2 id="1-共享内存概念"><a href="#1-共享内存概念" class="headerlink" title="1 共享内存概念"></a>1 共享内存概念</h2><p>共享内存可以说是最有用的进程间通信方式，也是最快的IPC形式， 因为进程可以直接读写内存，而不需要任何数据的拷贝。</p>
+<p>对于像管道和消息队列等通信方式，则需要在内核和用户空间进行 <strong>两次运行级别切换（系统调用导致保护和恢复进程上下文环境）＋四次数据拷贝</strong> ，而共享内存则只拷贝两次数据: 一次从输入文件到共享内存区，另一次从共享内存区到输出文件。</p>
+<p>实际上，进程之间在共享内存时，并不总是读写少量数据后就解除映射，有新的通信时，再重新建立共享内存区域。而是保持共享区域，直到通信完毕为止，这样，数据内容一直保存在共享内存中，并没有写回文件。共享内存中的内容往往是在解除映射时才写回文件的。因此，采用共享内存的通信方式效率是非常高的。</p>
+<h3 id="1-1-传统文件访问方式"><a href="#1-1-传统文件访问方式" class="headerlink" title="1.1 传统文件访问方式"></a>1.1 传统文件访问方式</h3><p>UNIX访问文件的传统方法是用<code>open</code>打开它们， 如果有多个进程访问同一个文件，则每一个进程在自己的地址空间都包含有该文件的副本，这不必要地浪费了存储空间。 下图说明了两个进程同时读一个文件的同一页的情形。</p>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E4%BC%A0%E7%BB%9F%E6%96%87%E4%BB%B6%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F.jpg" alt=""></p>
+<p>系统要将该页从磁盘读到高速缓冲区中, 每个进程再执行一个存储器内的复制操作将数据从高速缓冲区读到自己的地址空间。</p>
+<h3 id="1-2-共享存储映射方式"><a href="#1-2-共享存储映射方式" class="headerlink" title="1.2 共享存储映射方式"></a>1.2 共享存储映射方式</h3><p>相对于传入文件访问方式，共享内存的的方式是：进程A和进程B都将该页映射到自己的地址空间，当进程A第一次访问该页中的数据时，它生成一个缺页中断。内核此时读入这一页到内存并更新页表使之指向它.以后, 当进程B访问同一页面而出现缺页中断时，该页已经在内存， 内核只需要将进程B的页表登记项指向次页即可。如下图所示: </p>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E6%98%A0%E5%B0%84%E6%96%B9%E5%BC%8F.jpg" alt=""></p>
+<h2 id="2-mmap"><a href="#2-mmap" class="headerlink" title="2 mmap()"></a>2 mmap()</h2><h3 id="2-1-mmap-工作原理"><a href="#2-1-mmap-工作原理" class="headerlink" title="2.1 mmap 工作原理"></a>2.1 mmap 工作原理</h3><p>mmap是一种<strong>内存映射文件的方法，即将一个文件或者其它对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间中一段虚拟地址的一一对映关系</strong>。实现这样的映射关系后，进程就可以采用指针的方式读写操作这一段内存，而系统会自动回写脏页面到对应的文件磁盘上，即<strong>完成了对文件的操作而不必再调用read,write等系统调用函数</strong>。相反，内核空间对这段区域的修改也直接反映用户空间，从而可以实现不同进程间的文件共享。如下图所示：</p>
+<p><img src="https://choubin-1300968093.cos.ap-beijing.myqcloud.com/blogImg/unp/%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E6%98%A0%E5%B0%84%E6%96%B9%E5%BC%8F.jpg" alt=""></p>
+<h3 id="2-2-mmap实现过程"><a href="#2-2-mmap实现过程" class="headerlink" title="2.2 mmap实现过程"></a>2.2 mmap实现过程</h3><p> mmap内存映射的实现过程，总的来说可以分为三个阶段： </p>
+<p>①进程启动映射过程，并在虚拟地址空间中为映射创建虚拟映射区域</p>
+<blockquote>
+<p>  进程在用户空间调用mmap函数。</p>
+<p>  在当前进程的虚拟地址空间中，寻找一段空闲的满足要求的连续的虚拟地址。</p>
+<p>  为此虚拟去分配一个vm_area_struct结构，并对该结构各个域进行初始化。</p>
+<p>  将新建的vm_area_struct插入到进程的虚拟地址区域链表或树中。</p>
+</blockquote>
+<p>②调用内核空间的系统调用函数mmap（不同于用户空间函数），实现文件物理地址和进程虚拟地址的一一映射关系</p>
+<blockquote>
+<p>  为映射分配了新的虚拟地址区域后，通过待映射的文件指针，在文件描述符表中找到对应的文件描述符，通过文件描述符，连接到内核“已打开文集”中该文件的文件结构体struct file，每个文件结构体维护着和这个已打开文件的相关信息（从open函数调用到内核返回文件描述符这块隶属于文件系统的知识，<strong>后续专题补充</strong>）。</p>
+<p>  通过该文件的文件结构体，连接到file_operations模块，调用 内核函数mmap，int mmap(struct file *filep,struct vm_area_struct *vma)。</p>
+<p>  内核mmap函数通过虚拟文件系统inode模块定位到文件磁盘物理地址。</p>
+<p>  通过remap_pfn_range函数建立页表，即实现了文件地址和虚拟地址区域的映射，此时这片虚拟地址区域没有任何数据关联到主存中</p>
+</blockquote>
+<p>③进程发起对这片映射空间的访问，引发缺页异常，实现文件内容到物理内存（主存）的拷贝</p>
+<blockquote>
+<p>  进程的读写操作访问虚拟地址空间的这一段映射地址，通过查询页表，发现这一段地址不在物理页面上，因为<strong>只是建立了地址映射，真正的磁盘数据还没有拷贝到内存中</strong>，因此引发缺页异常缺页异常进行一系列判断，确定无非法操作后，内核发起请求调页过程调页过程先在交换缓存空间中寻找需要访问的内存页，如果没有则调用nopage函数把所缺的页面从磁盘装入主存中之后进程可对这片主存进行读或写操作，如果写操作改变了内容，一定时间后系统会自动回写脏页面到对应的磁盘地址，也就是完成了写入到文件的过程修改过的脏页面不会立即更新到文件中，而是有一段时间的延迟，可以调用msync来强制同步，这样所写的内容就立即保存到文件里了。</p>
+<p>  对于共享内存映射情况，缺页异常处理程序首先在swap cache中寻找目标页（符address_space以及偏移量的物理页），如果找到，则直接返回地址；如果没有找到，则判断该页是否在交换区(swap area)，如果在，则执行一个换入操作；如果上述两种情况都不满足，处理程序将分配新的物理页面，并把它插入到page cache中。进程最终将更新进程页表。 </p>
+<p>  注：对于映射普通文件情况（非共享映射），缺页异常处理程序首先会在page cache中根据address_space以及数据偏移量寻找相应的页面。如果没有找到，则说明文件数据还没有读入内存，处理程序会从磁盘读入相应的页面，并返回相应地址，同时，进程页表也会更新。         所有进程在映射同一个共享内存区域时，情况都一样，在建立线性地址与物理地址之间的映射之后，不论进程各自的返回地址如何，实际访问的必然是同一个共享内存区域对应的物理页面。 </p>
+</blockquote>
+<h3 id="2-3-mmap-和munmap-函数原型"><a href="#2-3-mmap-和munmap-函数原型" class="headerlink" title="2.3 mmap()和munmap()函数原型"></a>2.3 mmap()和munmap()函数原型</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">mmap</span><span class="params">(<span class="keyword">void</span> *addr, <span class="keyword">size_t</span> length, <span class="keyword">int</span> prot, <span class="keyword">int</span> flags, <span class="keyword">int</span> fd, <span class="keyword">off_t</span> offset)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>mmap()</code>函数用 映射文件描述符fd指定文件的 <code>[offset,offset + length]</code>区域至调用进程的<code>[addr, addr + length]</code>的内存区域。</p>
+<p><code>addr</code>：映射区开始地址，用户可以给定。建议设定NULL，有内核给定起始地址。</p>
+<p><code>length</code>：映射区的长度，需要大于等于文件的实际大小。</p>
+<p><code>prot</code>：期望的内存保护标志，不能与文件打开模式冲突。</p>
+<blockquote>
+<p>   PROT_EXEC ：页内容可以被执行</p>
+<p>   PROT_READ ：页内容可以被读取</p>
+<p>   PROT_WRITE ：页可以被写入</p>
+<p>   PROT_NONE ：页不可访问</p>
+</blockquote>
+<p><code>fd</code>:用于创建共享内存映射区的那个文件的 文件描述符；fd可以指定为-1，此时须指定flags参数中的MAP_ANON，表明进行的是匿名映射（不涉及具体的文件名，避免了文件的创建及打开，很显然只能用于具有<strong>亲缘关系的进程间通信，即用于通过fork/vfork/clone系统调用创建的子进程之间的匿名映射通信。</strong>）</p>
+<p><code>offset</code>：设置文件从何处开始映射（对于不需要读入整个文件的情况），默认为0。</p>
+<p><code>flags</code>：指定映射对象的类型，映射选项和映射页是否可以共享。一般设为MAP_SHARED，表明与其它所有映射这个对象的进程共享映射空间；此时对共享区的写入，相当于输出到文件。直到msync()或者munmap()被调用之前，文件实际上不会被更新。另外还可以设为MAP_PRIVATE，表示建立一个写入时拷贝的私有映射；此时内存区域的写入不会影响到原文件。这两个标识是互斥的，只能使用其中一个。其他标识参照<code>man</code>手册介绍。</p>
+<p>返回值：执行成功时返回<code>addr</code>即映射内存的首地址，失败时将返回<code>MAP_FAILED</code>，这是一个<code>void*(-1)</code>，并会设置<code>errno</code>。</p>
+<p>函数的一般使用方法如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 建立有名映射, 注意length参数需要手动指定</span></span><br><span class="line"><span class="keyword">int</span> fd = <span class="built_in">open</span>(<span class="string">"filename"</span>, O_RDWR);</span><br><span class="line"><span class="keyword">char</span> *ptr = mmap(<span class="literal">NULL</span>, length, PROT_READ|PORT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line"><span class="comment">// 建立匿名映射</span></span><br><span class="line"><span class="keyword">char</span> *ptr = mmap(<span class="literal">NULL</span>, length, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">munmap</span><span class="params">(<span class="keyword">void</span> *addr, <span class="keyword">size_t</span> length)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>munmap()</code>用于释放映射区，参数含义与<code>mmap()</code>对应，在此不做介绍。</p>
+<h3 id="2-4-mmap-使用注意事项"><a href="#2-4-mmap-使用注意事项" class="headerlink" title="2.4 mmap()使用注意事项"></a>2.4 mmap()使用注意事项</h3><ol>
+<li>用于创建映射区的文件大小为 0，实际指定非0大小创建映射区，出 “总线错误”。</li>
+<li>用于创建映射区的文件大小为 0，实际制定0大小创建映射区， 出 “无效参数”。</li>
+<li>用于创建映射区的文件读写属性为，只读。映射区属性为 读、写。 出 “无效参数”。</li>
+<li>创建映射区，需要read权限。当访问权限指定为 “共享”MAP_SHARED是， mmap的读写权限，应该 &lt;=文件的open权限。只写不行。</li>
+<li>文件描述符fd，在mmap创建映射区完成即可关闭。后续访问文件，用 地址访问。</li>
+<li>offset 必须是 4096的整数倍。（MMU 映射的最小单位 4k ）</li>
+<li>对申请的映射区内存，不能越界访问。</li>
+<li>munmap用于释放的 地址，必须是mmap申请返回的地址。</li>
+<li>映射区访问权限为 “私有”MAP_PRIVATE, 对内存所做的所有修改，只在内存有效，不会反应到物理磁盘上。</li>
+<li>映射区访问权限为 “私有”MAP_PRIVATE, 只需要open文件时，有读权限，用于创建映射区即可。</li>
+</ol>
+<h3 id="2-5-mmap-使用实例"><a href="#2-5-mmap-使用实例" class="headerlink" title="2.5 mmap()使用实例"></a>2.5 mmap()使用实例</h3><p>这是一个使用<code>mmap()</code>使用有名映射的小例子。</p>
+<ul>
+<li>先使用<code>open</code>新建一个文件，得到文件描述符</li>
+<li>使用<code>ftruncate()</code>来拓展文件到指定大小</li>
+<li>使用<code>mmap()</code>创建映射，得到映射内存首地址<code>ptr</code></li>
+<li>使用<code>memcpy()</code>向<code>ptr</code>中写入字符串</li>
+<li>使用<code>mmap()</code>关闭映射</li>
+</ul>
+<p>代码如下</p>
+<figure class="highlight c"><figcaption><span>mmap.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> fd;</span><br><span class="line">    <span class="keyword">char</span> *p;</span><br><span class="line">    <span class="keyword">char</span> *str = <span class="string">"hello mmap\n"</span>;</span><br><span class="line">    <span class="keyword">if</span>((fd = <span class="built_in">open</span>(<span class="string">"abc"</span>, O_RDWR|O_CREAT, <span class="number">0755</span>)) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"open error"</span>);</span><br><span class="line">    <span class="comment">// 新文件长度为0，必须先拓展文件大小</span></span><br><span class="line">    <span class="keyword">if</span>(ftruncate(fd, <span class="number">20</span>) == <span class="number">-1</span>) sys_err(<span class="string">"truncate error"</span>);</span><br><span class="line">    p = mmap(<span class="literal">NULL</span>, <span class="number">20</span>, PROT_READ | PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span>(p == MAP_FAILED) sys_err(<span class="string">"mmap error"</span>);</span><br><span class="line">    <span class="comment">// mmap()执行成功后即可关闭文件描述符</span></span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line">    <span class="built_in">memcpy</span>(p, str, <span class="built_in">strlen</span>(str));</span><br><span class="line">    <span class="comment">// 最后一定要关闭映射区</span></span><br><span class="line">    munmap(p, <span class="number">20</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译执行完成后,目录下将多出<code>abc</code>普通文件。使用<code>cat</code>查看文件内容</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> cat abc </span></span><br><span class="line">hello mmap</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-使用mmap-完成进程间通信"><a href="#3-使用mmap-完成进程间通信" class="headerlink" title="3 使用mmap()完成进程间通信"></a>3 使用mmap()完成进程间通信</h2><h3 id="3-1-mmap-用于父子进程间通信"><a href="#3-1-mmap-用于父子进程间通信" class="headerlink" title="3.1 mmap()用于父子进程间通信"></a>3.1 mmap()用于父子进程间通信</h3><p>父子进程间通信既可以使用有名映射也可以使用匿名映射。这里使用匿名映射映射进行演示。</p>
+<p>显然共享内存映射应当在使用<code>fork()</code>之前就建立好。代码如下</p>
+<figure class="highlight c"><figcaption><span>mmap_fork.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span>* mmapptr;</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line">    <span class="keyword">char</span>* str = <span class="string">"It is a test for mmap() between child and parent process\n"</span>;</span><br><span class="line">    mmapptr = mmap(<span class="literal">NULL</span>, <span class="number">128</span>, PROT_READ | PROT_WRITE,</span><br><span class="line">                   MAP_SHARED | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (mmapptr == MAP_FAILED)</span><br><span class="line">        sys_err(<span class="string">"mmapptr error"</span>);</span><br><span class="line">    <span class="keyword">if</span> ((pid = fork()) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"fork error"</span>);</span><br><span class="line">    <span class="keyword">if</span> (pid &gt; <span class="number">0</span>) &#123;	<span class="comment">// 父进程向共享内存中写入字符串</span></span><br><span class="line">        <span class="built_in">memcpy</span>(mmapptr, str, <span class="built_in">strlen</span>(str));</span><br><span class="line">        <span class="comment">// 注意父子进程中都要关闭映射区</span></span><br><span class="line">        <span class="keyword">if</span> (munmap(mmapptr, <span class="number">128</span>) == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"munmap error"</span>);</span><br><span class="line">        <span class="keyword">if</span> (wait(<span class="literal">NULL</span>) &gt; <span class="number">0</span>)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"\nthe child process %d has been recylced\n"</span>, pid);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;	<span class="comment">// 子进程从共享内存中读取字符串</span></span><br><span class="line">        sleep(<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">char</span> buf[<span class="number">128</span>];</span><br><span class="line">        <span class="built_in">memcpy</span>(buf, mmapptr, <span class="built_in">strlen</span>(str));</span><br><span class="line">        <span class="built_in">write</span>(STDOUT_FILENO, buf, <span class="built_in">strlen</span>(str));</span><br><span class="line">        <span class="keyword">if</span> (munmap(mmapptr, <span class="number">128</span>) == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"munmap error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-mmap-用于非亲缘进程间通信"><a href="#3-2-mmap-用于非亲缘进程间通信" class="headerlink" title="3.2 mmap()用于非亲缘进程间通信"></a>3.2 mmap()用于非亲缘进程间通信</h3><p>在非亲缘进程间通信，不能用匿名映射，必须用有名映射。</p>
+<p>这里先写一个负责向映射区写入数据的程序</p>
+<figure class="highlight c"><figcaption><span>mmap_w.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"><span class="comment">// 向数据区写入数据的结构体</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">student</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> id;</span><br><span class="line">    <span class="keyword">char</span> name[<span class="number">16</span>];</span><br><span class="line">    <span class="keyword">int</span> age;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> fd;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">student</span> *<span class="title">ptr</span>, <span class="title">stu</span>;</span></span><br><span class="line">    <span class="comment">//若这里不置零读取数据将会有文件空洞即'\0'，打印表现为乱码</span></span><br><span class="line">    <span class="built_in">memset</span>(&amp;stu, <span class="number">0</span>, <span class="keyword">sizeof</span>(stu));</span><br><span class="line">    stu.id = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">memcpy</span>(stu.name, <span class="string">"zhoubin"</span>, <span class="built_in">strlen</span>(<span class="string">"zhoubin"</span>));</span><br><span class="line">    stu.age = <span class="number">18</span>;</span><br><span class="line">    <span class="keyword">if</span> ((fd = <span class="built_in">open</span>(<span class="string">"mmapIPC"</span>, O_RDWR | O_CREAT, <span class="number">0755</span>)) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"open error"</span>);</span><br><span class="line">    <span class="keyword">if</span>(ftruncate(fd, <span class="keyword">sizeof</span>(stu)) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"ftruncate error"</span>);</span><br><span class="line">    ptr = (struct student*)mmap(<span class="literal">NULL</span>, <span class="keyword">sizeof</span>(stu), PROT_READ | PROT_WRITE,</span><br><span class="line">                                MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (ptr == MAP_FAILED)</span><br><span class="line">        sys_err(<span class="string">"mmap error"</span>);</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">close</span>(fd) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"close error"</span>);</span><br><span class="line">    <span class="comment">// 循环地向共享内存中写入数据</span></span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="built_in">memcpy</span>(ptr, &amp;stu, <span class="keyword">sizeof</span>(stu));</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"student id: %d student name: %s student age: %d\n"</span>, ptr-&gt;id, ptr-&gt;name, ptr-&gt;age);</span><br><span class="line">        ++stu.id;</span><br><span class="line">        sleep(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (munmap(ptr, <span class="keyword">sizeof</span>(stu)) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"munmap error"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这时再写一个负责从共享内存中读取数据的程序</p>
+<figure class="highlight c"><figcaption><span>mmap_r.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">student</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> id;</span><br><span class="line">    <span class="keyword">char</span> name[<span class="number">16</span>];</span><br><span class="line">    <span class="keyword">int</span> age;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> fd;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">student</span> *<span class="title">ptr</span>, <span class="title">stu</span>;</span></span><br><span class="line">    <span class="built_in">memset</span>(&amp;stu ,<span class="number">0</span>, <span class="keyword">sizeof</span>(struct student));</span><br><span class="line">    <span class="keyword">if</span> ((fd = <span class="built_in">open</span>(<span class="string">"mmapIPC"</span>, O_RDONLY)) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"open error"</span>);</span><br><span class="line">    ptr = (struct student*)mmap(<span class="literal">NULL</span>, <span class="keyword">sizeof</span>(stu), PROT_READ, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span>(ptr == MAP_FAILED)</span><br><span class="line">    sys_err(<span class="string">"mmap error"</span>);</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="built_in">memcpy</span>(&amp;stu, ptr, <span class="keyword">sizeof</span>(stu));</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"student id: %d student name: %s student age: %d\n"</span>, stu.id, stu.name, stu.age);</span><br><span class="line">        sleep(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(munmap(ptr, <span class="keyword">sizeof</span>(stu)) == <span class="number">-1</span>)</span><br><span class="line">        sys_err(<span class="string">"munmmap error"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此时将两个程序编译执行，先运行<code>mmap_w</code>写程序，再运行<code>mmap_r</code>读程序。现象如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./mmap_w </span></span><br><span class="line">student id: 1 student name: zhoubin student age: 18</span><br><span class="line">student id: 2 student name: zhoubin student age: 18</span><br><span class="line">student id: 3 student name: zhoubin student age: 18</span><br><span class="line">student id: 4 student name: zhoubin student age: 18</span><br><span class="line">student id: 5 student name: zhoubin student age: 18</span><br><span class="line">student id: 6 student name: zhoubin student age: 18</span><br><span class="line">student id: 7 student name: zhoubin student age: 18</span><br><span class="line">student id: 8 student name: zhoubin student age: 18</span><br><span class="line">student id: 9 student name: zhoubin student age: 18</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./mmap_r</span></span><br><span class="line">student id: 14 student name: zhoubin student age: 18</span><br><span class="line">student id: 15 student name: zhoubin student age: 18</span><br><span class="line">student id: 16 student name: zhoubin student age: 18</span><br><span class="line">student id: 17 student name: zhoubin student age: 18</span><br><span class="line">student id: 18 student name: zhoubin student age: 18</span><br><span class="line">student id: 19 student name: zhoubin student age: 18</span><br></pre></td></tr></table></figure>
+
+<p>说明成功进行了进程间的通信。</p>
+<h2 id="4-结束语"><a href="#4-结束语" class="headerlink" title="4 结束语"></a>4 结束语</h2><p>本篇文章先介绍了<code>mmap</code>实现共享内存映射的概念和原理，然后介绍了<code>mmap</code>函数和常用参数，最后练习了使用<code>mmap()</code>进行父子进程、非亲缘进程间通信。</p>
+<p>关于共享内存的原理部分，主要都是参考其他的博客资料，后续再翻阅APUE一书，加深对这部分的理解。</p>
+
+      
+    </div>
+
+    
+      
+
+<div class="post-body">
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm02\" rel="bookmark">Linux 系统编程（二）：文件、文件操作函数和相关实例</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\15\apue-hm01\" rel="bookmark">Linux 系统编程（一）：C/C++程序编译与gdb调试</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm03\" rel="bookmark">Linux系统编程（三）：stat函数和ls -l命令的实现</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm04\" rel="bookmark">Linux系统编程（四）：utmp文件和who命令的实现</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\24\apue-hm05\" rel="bookmark">Linux系统编程（五）：多进程和fork()</a></div>
+      
+    </li>
+  
+  </ul>
+</div>
+
+
+    
+
+    
+    
+    
+
+    
+      <div>
+        <div>
+  
+    <div style="text-align:center;color:#bfbfbf;font-size:16px;">
+      <span>-------- 本文结束 </span>
+      <i class="fa fa-paw"></i>
+      <span> 感谢阅读 --------</span>
+    </div>
+  
+</div>
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>给我加块红烧肉吧</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.jpg" alt="Chou Bin 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Chou Bin 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <!-- JS库 clipboard 拷贝内容到粘贴板-->
+<script src="https://cdn.bootcss.com/clipboard.js/2.0.1/clipboard.min.js"></script>
+
+<!-- JS库 sweetalert 显示提示信息-->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<ul class="post-copyright">
+  <!-- 本文标题 -->
+  <li>
+    <strong>本文标题： </strong>
+    Linux系统编程（七）：使用mmap在进程间通信
+  </li>
+
+  <!-- 本文作者 -->
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>
+    Chou Bin
+  </li>
+
+  <!-- 创建时间 -->
+  <li>
+    <strong>创建时间： </strong>
+    2020年02月25日 - 00时02分
+  </li>
+
+  <!-- 修改时间 -->
+  <li>
+    <strong>修改时间： </strong>
+    2020年02月25日 - 00时02分
+  </li>
+
+  <!-- 引用链接 -->
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://yoursite.com/2020/02/25/apue-hm07/" title="Linux系统编程（七）：使用mmap在进程间通信"
+      >http://yoursite.com/2020/02/25/apue-hm07/</a
+    >
+    <span class="copy-path" title="点击复制引用链接"
+      ><i
+        style="cursor: pointer"
+        class="fa fa-clipboard"
+        data-clipboard-text="[Chou Bin's Blog | Linux系统编程（七）：使用mmap在进程间通信](http://yoursite.com/2020/02/25/apue-hm07/)"
+        aria-label="复制成功"
+      ></i
+    ></span>
+  </li>
+
+  <!-- 版权声明 -->
+  <li class="post-copyright-license">
+    <strong
+      >版权声明：
+    </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+<script>
+  var clipboard = new ClipboardJS(".fa-clipboard");
+  clipboard.on("success", function(target) {
+    var message = document.createElement("div");
+    message.innerHTML =
+      '<i class="fa fa-check-circle message-icon"></i><span class="message-content">' +
+      target.trigger.getAttribute("aria-label") +
+      "</span>";
+    swal({
+      content: message,
+      className: "copy-success-message",
+      timer: 1000,
+      button: false
+    });
+  });
+</script>
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C/" rel="tag"><i class="fa fa-tags"></i> C++</a>
+          
+            <a href="/tags/Linux/" rel="tag"><i class="fa fa-tags"></i> Linux</a>
+          
+        </div>
+      
+
+      
+      
+        <div class="post-widgets">
+        
+          <div class="wp_rating">
+            <div id="wpac-rating"></div>
+          </div>
+        
+
+        
+
+        
+        </div>
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/02/24/apue-hm06/" rel="next" title="Linux系统编程（六）：使用管道在进程间通信">
+                Linux系统编程（六）：使用管道在进程间通信 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <a href="/">
+                <img class="site-author-image" itemprop="image"
+                  src="/images/avatar.jpg"
+                  alt="Chou Bin" />
+              </a>
+            
+              <p class="site-author-name" itemprop="name">Chou Bin</p>
+              <p class="site-description motion-element" itemprop="description">慢就是快，快就是慢</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/lammmmmmm" target="_blank" title="GitHub" rel="external nofollow"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:ozc236@163.com" target="_blank" title="E-Mail" rel="external nofollow"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://weibo.com/3817442698" target="_blank" title="Weibo" rel="external nofollow"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+            <div class="cc-license motion-element" itemprop="license">
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" target="_blank" rel="external nofollow">
+                <img src="/images/cc-by-nc-sa.svg" alt="Creative Commons" />
+              </a>
+            </div>
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://lesylin.com" title="Lesy" target="_blank">Lesy</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-共享内存概念"><span class="nav-text">1 共享内存概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-传统文件访问方式"><span class="nav-text">1.1 传统文件访问方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-共享存储映射方式"><span class="nav-text">1.2 共享存储映射方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-mmap"><span class="nav-text">2 mmap()</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-mmap-工作原理"><span class="nav-text">2.1 mmap 工作原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-mmap实现过程"><span class="nav-text">2.2 mmap实现过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-mmap-和munmap-函数原型"><span class="nav-text">2.3 mmap()和munmap()函数原型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-mmap-使用注意事项"><span class="nav-text">2.4 mmap()使用注意事项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-mmap-使用实例"><span class="nav-text">2.5 mmap()使用实例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-使用mmap-完成进程间通信"><span class="nav-text">3 使用mmap()完成进程间通信</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-mmap-用于父子进程间通信"><span class="nav-text">3.1 mmap()用于父子进程间通信</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-mmap-用于非亲缘进程间通信"><span class="nav-text">3.2 mmap()用于非亲缘进程间通信</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-结束语"><span class="nav-text">4 结束语</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script
+  async
+  src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"
+></script>
+<div class="copyright">&copy; 2019 – <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Chou Bin</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点总字数：</span>
+    
+    <span title="站点总字数">147k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    
+    <span title="站点阅读时长">4:05</span>
+  
+</div>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      你是小破站的第 <span class="busuanzi-value" id="busuanzi_value_site_uv"></span> 为访客
+    </span>
+  
+
+  
+    <span class="site-pv">
+      历经 <span class="busuanzi-value" id="busuanzi_value_site_pv"></span> 次回眸才与你相遇
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  
+  
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(function (item) {
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz',
+        appKey: 'rr9HWuw87tMKsDi665PptoeR',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        meta:guest,
+        pageSize:'10' || 10,
+        visitor: false
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('body');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('3');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "NMuTRE3isIi7He4TH7A3NpjI-gzGzoHsz",
+                'X-LC-Key': "rr9HWuw87tMKsDi665PptoeR",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+  
+  <script type="text/javascript">
+  wpac_init = window.wpac_init || [];
+  wpac_init.push({widget: 'Rating', id: 22562,
+    el: 'wpac-rating',
+    color: 'fadb14'
+  });
+  (function() {
+    if ('WIDGETPACK_LOADED' in window) return;
+    WIDGETPACK_LOADED = true;
+    var mc = document.createElement('script');
+    mc.type = 'text/javascript';
+    mc.async = true;
+    mc.src = '//embed.widgetpack.com/widget.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+  })();
+  </script>
+
+
+  
+  
+  
+  <script src="/lib/pangu/dist/pangu.min.js?v=3.3"></script>
+  <script type="text/javascript">pangu.spacingPage();</script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+  <script async src="/js/cursor/fireworks.js"></script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+
+
+ 
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-precise-range-plugin@1.3.0/moment-precise-range.min.js"></script>
+<script>
+  function timer() {
+    var ages = moment.preciseDiff(moment(),moment(20191221,"YYYYMMDD"));
+    ages = ages.replace(/years?/, "年");
+    ages = ages.replace(/months?/, "月");
+    ages = ages.replace(/days?/, "天");
+    ages = ages.replace(/hours?/, "小时");
+    ages = ages.replace(/minutes?/, "分");
+    ages = ages.replace(/seconds?/, "秒");
+    ages = ages.replace(/\d+/g, '<span style="color:#1890ff">$&</span>');
+    div.innerHTML = `我已在此等候你 ${ages}`;
+  }
+  var div = document.createElement("div");
+  //插入到copyright之后
+  var copyright = document.querySelector(".copyright");
+  document.querySelector(".footer-inner").insertBefore(div, copyright.nextSibling);
+  timer();
+  setInterval("timer()",1000)
+</script>
+
+
+ 
+<script>
+  var OriginTitile = document.title;
+  var titleTime;
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      document.title = "(つェ⊂) 看不见我看不见我~" + OriginTitile;
+      clearTimeout(titleTime);
+    } else {
+      document.title = "(*´∇｀*) 咦，被你发现了~" + OriginTitile;
+      titleTime = setTimeout(function() {
+        document.title = OriginTitile;
+      }, 2000);
+    }
+  });
+</script>
+
+</body>
+</html>
+
+
+
+  <script src="/js/wobblewindow.js"></script>
+  <script>
+    //只在桌面版网页启用特效
+    if( window.innerWidth > 768  ){
+      $(document).ready(function () {
+        
+          $('#header').wobbleWindow({
+            radius: 65,
+            movementTop: false,
+            movementLeft: false,
+            movementRight: false,
+            debug: false,
+          });
+        
+
+        
+
+        
+          $('#footer').wobbleWindow({
+            radius: 65,
+            movementBottom: false,
+            movementLeft: false,
+            movementRight: false,
+            position: 'absolute',
+            debug: false,
+          });
+        
+      });
+    }
+  </script>

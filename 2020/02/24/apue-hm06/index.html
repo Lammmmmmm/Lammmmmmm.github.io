@@ -151,18 +151,18 @@
 
 
 
-  <meta name="description" content="本篇文章是 TinySTL 实现的系列文章的第一篇。撰写初衷是为了对学习《STL 源码剖析》一书所做的总结回顾，并记录一些思考，顺便也作为我参照SGI STL源码实现的一个 TinySTL 项目的介绍文档，相关代码会陆续上传到我的github。 1 traits 编程技法traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。  作用：通过函数模板来对具体对象或变量进行">
+  <meta name="description" content="进程间通信（IPC）的方式有很多种，常用方式有管道pipe、信号signal、映射mmap、本地套接字socket等。这些方式各有优势，其中管道的方式最为简单。本篇文章主要记录管道在进程间通信的使用，在编程实例中还有dup、exec函数族的使用。 1 管道的介绍在使用 Linux 命令的时，经常会借助管道来将一个命令的输出作为另一个命令的输入来执行，如 1ps aux | grep init">
 <meta property="og:type" content="article">
-<meta property="og:title" content="TinySTL实现项目（一）：traits 技巧与 type_traits 模板">
-<meta property="og:url" content="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/index.html">
+<meta property="og:title" content="Linux系统编程（六）：使用管道在进程间通信">
+<meta property="og:url" content="http://yoursite.com/2020/02/24/apue-hm06/index.html">
 <meta property="og:site_name" content="Chou Bin&#39;s Blog">
-<meta property="og:description" content="本篇文章是 TinySTL 实现的系列文章的第一篇。撰写初衷是为了对学习《STL 源码剖析》一书所做的总结回顾，并记录一些思考，顺便也作为我参照SGI STL源码实现的一个 TinySTL 项目的介绍文档，相关代码会陆续上传到我的github。 1 traits 编程技法traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。  作用：通过函数模板来对具体对象或变量进行">
+<meta property="og:description" content="进程间通信（IPC）的方式有很多种，常用方式有管道pipe、信号signal、映射mmap、本地套接字socket等。这些方式各有优势，其中管道的方式最为简单。本篇文章主要记录管道在进程间通信的使用，在编程实例中还有dup、exec函数族的使用。 1 管道的介绍在使用 Linux 命令的时，经常会借助管道来将一个命令的输出作为另一个命令的输入来执行，如 1ps aux | grep init">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2020-01-01T12:37:14.399Z">
-<meta property="article:modified_time" content="2020-01-03T08:04:33.811Z">
+<meta property="article:published_time" content="2020-02-24T11:11:09.201Z">
+<meta property="article:modified_time" content="2020-02-24T11:09:13.951Z">
 <meta property="article:author" content="Chou Bin">
 <meta property="article:tag" content="C++">
-<meta property="article:tag" content="STL">
+<meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary">
 
 
@@ -170,7 +170,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/02/24/apue-hm06/"/>
 
 
 
@@ -180,7 +180,7 @@
   };
 </script>
 
-  <title>TinySTL实现项目（一）：traits 技巧与 type_traits 模板 | Chou Bin's Blog</title>
+  <title>Linux系统编程（六）：使用管道在进程间通信 | Chou Bin's Blog</title>
   
 
 
@@ -388,7 +388,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/24/apue-hm06/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Chou Bin">
@@ -405,7 +405,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">TinySTL实现项目（一）：traits 技巧与 type_traits 模板
+          <h2 class="post-title" itemprop="name headline">Linux系统编程（六）：使用管道在进程间通信
               
             
           </h2>
@@ -430,7 +430,7 @@
                 
               
 
-              <time title="创建时间：2020-01-01 20:37:14" itemprop="dateCreated datePublished" datetime="2020-01-01T20:37:14+08:00">2020-01-01</time>
+              <time title="创建时间：2020-02-24 19:11:09" itemprop="dateCreated datePublished" datetime="2020-02-24T19:11:09+08:00">2020-02-24</time>
             
 
             
@@ -455,7 +455,7 @@
                   ，
                 
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/STL/" itemprop="url" rel="index"><span itemprop="name">STL</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Linux系统编程</span></a></span>
 
                 
                 
@@ -470,8 +470,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2020/01/01/STL1-TraitsAndType-traitsTemplate/#comments" itemprop="discussionUrl">
-                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/01/01/STL1-TraitsAndType-traitsTemplate/" itemprop="commentCount"></span>
+                <a href="/2020/02/24/apue-hm06/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count valine-comment-count" data-xid="/2020/02/24/apue-hm06/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -479,7 +479,7 @@
 
           
           
-             <span id="/2020/01/01/STL1-TraitsAndType-traitsTemplate/" class="leancloud_visitors" data-flag-title="TinySTL实现项目（一）：traits 技巧与 type_traits 模板">
+             <span id="/2020/02/24/apue-hm06/" class="leancloud_visitors" data-flag-title="Linux系统编程（六）：使用管道在进程间通信">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -507,7 +507,7 @@
                 
                   <span class="post-meta-item-text">本文字数：</span>
                 
-                <span title="本文字数">16k</span>
+                <span title="本文字数">25k</span>
               
 
               
@@ -521,7 +521,7 @@
                 
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
-                <span title="阅读时长">27 分钟</span>
+                <span title="阅读时长">42 分钟</span>
               
             </div>
           
@@ -541,62 +541,93 @@
       
 
       
-        <p>本篇文章是 TinySTL 实现的系列文章的第一篇。撰写初衷是为了对学习《STL 源码剖析》一书所做的总结回顾，并记录一些思考，顺便也作为我参照SGI STL源码实现的一个 TinySTL 项目的介绍文档，相关代码会陆续上传到<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">我的github</a>。</p>
-<h2 id="1-traits-编程技法"><a href="#1-traits-编程技法" class="headerlink" title="1 traits 编程技法"></a>1 traits 编程技法</h2><p>traits 编程技法是C++泛型编程中常用技巧，这里先简单地概括一下其作用和目的。</p>
-<ul>
-<li>作用：通过函数模板来对具体对象或变量进行推导以<strong>获取其类型</strong>或<strong>某种特性</strong>。</li>
-<li>目的1：针对获得的类型和某种特性来对<strong>实现函数进行优化以达到更高的性能</strong>。</li>
-<li>目的2：通过提取出的类型<strong>作为模板函数的返回类型</strong>，方便函数实现。</li>
-</ul>
-<p>关于目的1，这里可以举一个迭代器的例子。例如 STL 中的迭代器型别有五种类型</p>
-<div class="note info"><ul><li>Input iterator，能读不能写，只支持自增运算。也就是只能用<code>iter++</code>或<code>++iter</code>来一步步前进而不能后退。</li><li>Output iterator ，能写不能读，只支持自增运算</li><li>Forward iterator ，能读能写，只支持自增运算</li><li>Bidirectional iterator ，能读能写，支持自增和自减运算。可以<code>iter++</code>、<code>++iter</code>，也可以<code>iter--</code>、<code>--iter</code>，但依然每次只能前进后退一步。</li><li>Random access iterator ，能读能写，能自增自减还能进行运算，如可以用<code>iter+=5</code>，<code>iter-=5</code>来前进或后退5步。</li></ul></div>
+        <p>进程间通信（IPC）的方式有很多种，常用方式有管道<code>pipe</code>、信号<code>signal</code>、映射<code>mmap</code>、本地套接字<code>socket</code>等。这些方式各有优势，其中管道的方式最为简单。本篇文章主要记录管道在进程间通信的使用，在编程实例中还有<code>dup</code>、<code>exec</code>函数族的使用。</p>
+<h2 id="1-管道的介绍"><a href="#1-管道的介绍" class="headerlink" title="1 管道的介绍"></a>1 管道的介绍</h2><p>在使用 Linux 命令的时，经常会借助管道来将一个命令的输出作为另一个命令的输入来执行，如</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ps aux | grep init</span><br></pre></td></tr></table></figure>
 
-<p>比如我有个迭代器<code>iter</code>，现在有个操作要求<code>iter</code>前进<code>n</code>步来读写数据。</p>
-<p>因为事先不知道迭代器的类型，我只能保守地猜测其只能自增自减，这样<span class="label danger">复杂度就是O(n)</span>，但如果我运用<code>traits</code>技巧使用模板<code>iterator_traits&lt;iter&gt;::category</code>（后续会介绍，现在只需要知道其可以获得迭代器类型即可）来获得迭代器类型知道了其是<code>Randon access iterator</code>，那么直接<code>iter += n</code>即可，<span class="label danger">此时复杂度就是O(1)</span>。</p>
-<p>对于目的2，这里也简单说一下。因为在C++11之前并没有<code>decltype</code>关键字，所以在编写模板函数的时候，函数返回类型是不能通过模板参数推导的，这时就可以使用<code>traits</code>技巧来获得类型作为模板函数的返回类型。</p>
-<p>比如现在有个模板函数需要接受一个函数迭代器，然后返回其指向的值，那么模板参数是迭代器，函数的返回类型却是其指向值的类型。显然没办法通过模板参数推导来得到迭代器的指向值类型，这时就可以对迭代器使用<code>traits</code>技巧来提取其指向值类型作为函数的返回类型。</p>
-<p>如果对迭代器类型不太熟悉还不太懂那也没关系，后续文章还会详细介绍，先接着往下看。</p>
-<h2 id="2-POD类型"><a href="#2-POD类型" class="headerlink" title="2 POD类型"></a>2 POD类型</h2><p>要说<code>type_traits</code>模板就必须先说<code>POD</code>类型。</p>
-<p>POD 是 Plain Old Data 的缩写，是 C++ 定义的一类数据结构概念，比如 <code>int</code>、<code>float</code> 等都是 POD 类型的。Plain 代表它是一个普通类型，Old 代表它是旧的，与 C 语言兼容，那么就可以使用 <code>memcpy()</code> 这种最原始的函数进行操作。两个系统进行交换数据，如果没有办法对数据进行语义检查和解释，那就只能以非常底层的数据形式进行交互，而拥有 POD 特征的类或者结构体通过二进制拷贝后依然能保持数据结构不变。</p>
-<p><strong>也就是说，能用 C 的 memcpy() 等函数进行操作的类型就是 POD 类型的数据</strong>。 </p>
-<p>在C++的各标准中对POD类型的有详细定义，从使用中可以概括为<strong>标量类型</strong>和<strong>POD类</strong>。</p>
+<p> 通常所说的管道<code>pipe</code>即匿名管道，区别于<code>FIFO</code>命名管道。</p>
+<p>管道是一种最基本的IPC机制，作用于有血缘关系的进程之间，完成数据传递。 其实现原理是：内核使用环形队列机制，借助内核缓冲区（4k）实现。</p>
+<p>其有以下特质</p>
 <ul>
-<li>标量类型：整型(<code>char</code>、<code>int</code>等等)，浮点型(<code>double</code>、<code>float</code>等等)，枚举类型，指针类型，指向成员指针类型，<code>std::nullptr_t</code>类型。</li>
-<li>POD类：包括满足 trivial 条件和 standard-layout 条件的<code>struct</code>、<code>class</code>、<code>union</code>。<ul>
-<li><strong>只有默认</strong>的构造/析构函数、拷贝/移动函数、拷贝/移动运算符。</li>
-<li>不能有<strong>虚函数</strong>和<strong>虚基类</strong>。</li>
-<li><strong>普通成员有相同的访问级别</strong>，如类成员都为<code>public</code>或都为<code>private</code>或都为<code>protected</code>。</li>
-<li>第一个成员为自身的数据成员，而不能是由父类定义的数据。</li>
-<li>只要有父类，<strong>普通成员只能在其中一个类中</strong>，不可分散。</li>
+<li>文件类型为伪文件，本质是内核缓冲区</li>
+<li>由两个文件描述符引用，一个表示读端，一个表示写端</li>
+<li>数据必须从管道写端流入，从读端流出</li>
 </ul>
+<p>由以上特质可以看出其局限性</p>
+<ul>
+<li>使用同一个管道的两个进程，自己写入的数据不能自己读</li>
+<li>数据被读走后，便不在管道中存在，不可反复读取</li>
+<li>半双工通信，数据只能在一个方向上流动</li>
+<li>只能在有公共祖先的进程间使用</li>
+</ul>
+<h2 id="2-pipe"><a href="#2-pipe" class="headerlink" title="2 pipe()"></a>2 pipe()</h2><h3 id="2-1-函数原型"><a href="#2-1-函数原型" class="headerlink" title="2.1 函数原型"></a>2.1 函数原型</h3><p>使用<code>pipe()</code>函数可以创建一个管道，函数原型如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="comment">// 参数为传出参数，包含两个管道的文件描述符，规定pipefd[0]为读，pipefd[1]为写</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pipe</span><span class="params">(<span class="keyword">int</span> pipefd[<span class="number">2</span>])</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>函数成功执行时返回0，否则返回-1。使用的时候要注意两点</p>
+<ul>
+<li>传出参数的<code>pipefd[2]</code>中，规定了必须使用<code>pipefd[0]</code>来读取数据，<code>pipe[1]</code>来写入数据。</li>
+<li>在使用读功能的进程中，要关闭<code>pipe[1]</code>描述符，在使用写功能中，要关闭<code>pipe[2]</code>描述符</li>
+</ul>
+<h3 id="2-2-管道读写行为"><a href="#2-2-管道读写行为" class="headerlink" title="2.2 管道读写行为"></a>2.2 管道读写行为</h3><p>管道的读写行为特性如下</p>
+<p>读管道时</p>
+<ul>
+<li>管道有数据时，<code>read</code>返回实际读到的字节数</li>
+<li>管道无数据时：1）无写端，<code>read</code>返回0,，类似于读到文件尾；2）有写端，<code>read</code>阻塞等待</li>
+</ul>
+<p>写管道时</p>
+<ul>
+<li>无读端时，将会异常终止</li>
+<li>有读端时：1）管道已满，阻塞等待；2）管道未满，返回写出的字节个数</li>
+</ul>
+<h3 id="2-3-使用小demo"><a href="#2-3-使用小demo" class="headerlink" title="2.3 使用小demo"></a>2.3 使用小demo</h3><figure class="highlight c"><figcaption><span>pipe.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span> <span class="comment">// sys_err定义于此</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret,fd[<span class="number">2</span>];</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line">    <span class="keyword">char</span> str[] = <span class="string">"hello pipe\n"</span>;</span><br><span class="line">	</span><br><span class="line">    <span class="keyword">if</span>(pipe(fd) == <span class="number">-1</span>) sys_err(<span class="string">"pipe error"</span>);</span><br><span class="line">    <span class="keyword">if</span>((pid = fork()) == <span class="number">-1</span>) sys_err(<span class="string">"fork error"</span>);</span><br><span class="line">    <span class="comment">// 父进程负责写</span></span><br><span class="line">    <span class="keyword">if</span>(pid &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">0</span>]);</span><br><span class="line">        <span class="keyword">if</span>((ret = <span class="built_in">write</span>(fd[<span class="number">1</span>], str, <span class="built_in">strlen</span>(str))) == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"write error"</span>);</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">1</span>]);</span><br><span class="line">        wait(<span class="literal">NULL</span>);      </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123; <span class="comment">// 子进程负责读</span></span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">1</span>]);</span><br><span class="line">        <span class="keyword">char</span> buf[<span class="number">128</span>];</span><br><span class="line">        <span class="keyword">if</span>((ret = <span class="built_in">read</span>(fd[<span class="number">0</span>], buf, <span class="number">128</span>)) == <span class="number">-1</span>) sys_err(<span class="string">"read error"</span>);</span><br><span class="line">        <span class="built_in">write</span>(STDOUT_FILENO, buf, ret);</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">0</span>]);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将程序编译执行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> gcc pipe.c -o pipe</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ./pipe</span></span><br><span class="line">hello pipe</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-dup和exec函数族"><a href="#3-dup和exec函数族" class="headerlink" title="3 dup和exec函数族"></a>3 dup和exec函数族</h2><h3 id="3-1-dup-和dup2"><a href="#3-1-dup-和dup2" class="headerlink" title="3.1 dup()和dup2()"></a>3.1 dup()和dup2()</h3><p>在本系列的第二篇中，已经对文件描述符有了大概介绍。某种意义上说，文件描述符就是一个数组的下标，其对应了一个文件指针，文件指针指向了文件表，然后一层一层指向最终文件。</p>
+<p><code>dup()</code>和<code>dup2()</code>的作用就是复制一个现存的文件描述符。先看函数原型</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="comment">// 返回一个新文件描述符</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">dup</span><span class="params">(<span class="keyword">int</span> oldfd)</span></span>;</span><br><span class="line"><span class="comment">// 让 newfd 作为 oldfd的拷贝</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">dup2</span><span class="params">(<span class="keyword">int</span> oldfd, <span class="keyword">int</span> newfd)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p> 当调用<code>dup</code>函数时，内核在进程中创建一个新的文件描述符，此描述符是当前可用文件描述符的最小数值，这个文件描述符指向<code>oldfd</code>所拥有的文件表项。<br>　　<code>dup2</code>和<code>dup</code>的区别就是可以用<code>newfd</code>参数指定新描述符的数值，如果<code>newfd</code>已经打开，则先将其关闭。如果<code>newfd</code>等于<code>oldfd</code>，则<code>dup2</code>返回<code>newfd</code>, 而不关闭它。<code>dup2</code>函数返回的新文件描述符同样与参数<code>oldfd</code>共享同一文件表项。</p>
+<h3 id="3-2-execl-和execlp"><a href="#3-2-execl-和execlp" class="headerlink" title="3.2 execl()和execlp()"></a>3.2 execl()和execlp()</h3><p><code>exec</code>函数族可以使进程执行某一程序。当进程转去执行程序时，<code>exec</code>函数后面的代码将不会执行。执行的程序会继承原进程的PID。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="comment">// 参数1为执行程序路径，后面是执行程序的参数，最后一个参数必须为NULL表结束</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execl</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">const</span> <span class="keyword">char</span> *arg, ...</span></span></span><br><span class="line"><span class="function"><span class="params">                       <span class="comment">/* (char  *) NULL */</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execlp</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *file, <span class="keyword">const</span> <span class="keyword">char</span> *arg, ...</span></span></span><br><span class="line"><span class="function"><span class="params">                       <span class="comment">/* (char  *) NULL */</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execle</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">const</span> <span class="keyword">char</span> *arg, ...</span></span></span><br><span class="line"><span class="function"><span class="params">                       <span class="comment">/*, (char *) NULL, char * const envp[] */</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">char</span> *<span class="keyword">const</span> argv[])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execvp</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *file, <span class="keyword">char</span> *<span class="keyword">const</span> argv[])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execvpe</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *file, <span class="keyword">char</span> *<span class="keyword">const</span> argv[], <span class="keyword">char</span> *<span class="keyword">const</span> envp[])</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>execl()</code>和<code>execlp()</code>的区别在于，前者参数1需要输入执行程序的完整路径，而后者专用于执行系统命令，参数1只需输入命名名称即可；而之后的参数都是执行程序的参数，相当于C程序中的<code>argv[]</code>，需要从<code>argv[0]</code>开始输入。</p>
+<h3 id="3-3-实现文件重定向"><a href="#3-3-实现文件重定向" class="headerlink" title="3.3 实现文件重定向"></a>3.3 实现文件重定向</h3><p>通过<code>dup()</code>函数，我们可以实现文件重定向功能。</p>
+<p>下面的例子中，使用<code>execl</code>执行<code>ps ajx</code>命令，通过<code>dup</code>将结果重定向到文件中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> fd = <span class="built_in">open</span>(<span class="string">"psajx.txt"</span>, O_RDWR | O_CREAT);</span><br><span class="line">    <span class="keyword">if</span> (fd == <span class="number">-1</span>) sys_err(<span class="string">"open error"</span>);</span><br><span class="line">    <span class="keyword">pid_t</span> pid = fork();</span><br><span class="line">    <span class="keyword">if</span> (pid == <span class="number">0</span>)&#123;</span><br><span class="line">        dup2(fd, STDOUT_FILENO);</span><br><span class="line">        <span class="comment">// execlp("ps", "ps", "ajx", NULL);</span></span><br><span class="line">        execl(<span class="string">"/bin/ps"</span>, <span class="string">"ps"</span>, <span class="string">"ajx"</span>, <span class="literal">NULL</span>);</span><br><span class="line">        sys_err(<span class="string">"exec error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">close</span>(fd);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-实现管道命令"><a href="#4-实现管道命令" class="headerlink" title="4 实现管道命令"></a>4 实现管道命令</h2><h3 id="4-1-实现思路"><a href="#4-1-实现思路" class="headerlink" title="4.1 实现思路"></a>4.1 实现思路</h3><p>先看一个管道命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ls | wc -l</span><br></pre></td></tr></table></figure>
+
+<p>该命令可以将<code>ls</code>的输出结果通过<code>wc</code>命令来计数。</p>
+<p>由于使用<code>exec</code>函数来调用系统命令后，原程序会被命令程序替换，而这里我们需要执行两个命令<code>ls</code>、<code>wc</code>，显然如果不自己实现命令的话，是不能用一个进程来调用两个命令程序的。</p>
+<p>因此需要使用<code>fork()</code>来创建子进程，用不同的子进程来调用命令，最后还需要父进程将其回收。而不同子进程之间的通信就可以使用上文所介绍的管道<code>pipe</code>来实现。</p>
+<p>另外<code>ls</code>的输出默认是<code>STDOUT_FILENO</code>，需要使用<code>dup2</code>，将其重定向到管道中，以便传输到<code>wc</code>；同理，<code>wc</code>的输入默认是<code>STDIN_FILENO</code>，也需要使用<code>dup2</code>重定向。</p>
+<h3 id="4-2-实现代码"><a href="#4-2-实现代码" class="headerlink" title="4.2 实现代码"></a>4.2 实现代码</h3><p>代码实现如下</p>
+<figure class="highlight c"><figcaption><span>ls_wc_l.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"../helper.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> fd[<span class="number">2</span>], i;</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(pipe(fd) == <span class="number">-1</span>) sys_err(<span class="string">"pipe error"</span>);</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; <span class="number">2</span>; ++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>((pid = fork()) == <span class="number">-1</span>)</span><br><span class="line">            sys_err(<span class="string">"fork"</span>);</span><br><span class="line">        <span class="keyword">if</span>(pid == <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(i == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">0</span>]);</span><br><span class="line">        dup2(fd[<span class="number">1</span>], STDOUT_FILENO);</span><br><span class="line">        execlp(<span class="string">"ls"</span>, <span class="string">"ls"</span>, <span class="literal">NULL</span>);</span><br><span class="line">        sys_err(<span class="string">"execlp ls error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(i == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">1</span>]);</span><br><span class="line">        dup2(fd[<span class="number">0</span>], STDIN_FILENO);</span><br><span class="line">        execlp(<span class="string">"wc"</span>, <span class="string">"wc"</span>, <span class="string">"-l"</span>, <span class="literal">NULL</span>);</span><br><span class="line">        sys_err(<span class="string">"execlp wc -l error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(i == <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">close</span>(fd[<span class="number">1</span>]);</span><br><span class="line">        <span class="keyword">while</span>(i--)&#123;</span><br><span class="line">            pid = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">if</span>((pid = wait(<span class="literal">NULL</span>)) == <span class="number">-1</span>) sys_err(<span class="string">"wait error"</span>);</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"child process %d has been recycled\n"</span>, pid);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将其编译执行效果如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./ls_wc_l2</span></span><br><span class="line">9</span><br><span class="line">child process 5221 has been recycled</span><br><span class="line">child process 5222 has been recycled</span><br></pre></td></tr></table></figure>
+
+<p>可见该程序可以完成功能，且成功回收了两个子进程。</p>
+<h2 id="5-FIFO管道"><a href="#5-FIFO管道" class="headerlink" title="5 FIFO管道"></a>5 FIFO管道</h2><h3 id="5-1-FIFO介绍"><a href="#5-1-FIFO介绍" class="headerlink" title="5.1 FIFO介绍"></a>5.1 FIFO介绍</h3><p> 由于基于fork机制，所以管道只能用于父进程和子进程之间，或者拥有相同祖先的两个子进程之间 (有亲缘关系的进程之间)。为了解决这一问题，Linux提供了FIFO方式连接进程。 </p>
+<p> FIFO (First in, First out)为一种特殊的文件类型，它在文件系统中有对应的路径。</p>
+<p>当一个进程以读(r)的方式打开该文件，而另一个进程以写(w)的方式打开该文件，那么内核就会在这两个进程之间建立管道，所以FIFO实际上也由内核管理，不与硬盘打交道。之所以叫FIFO，是因为管道本质上是一个先进先出的队列数据结构，最早放入的数据被最先读出来，从而保证信息交流的顺序。</p>
+<p>FIFO管道又称为命名管道。其实它只是借用了文件系统(file system,命名管道是一种特殊类型的文件，因为Linux中所有事物都是文件，它在文件系统中以文件名的形式存在。)来为管道命名。写模式的进程向FIFO文件中写入，而读模式的进程从FIFO文件中读出。当删除FIFO文件时，管道连接也随之消失 。</p>
+<p>跟管道类似，FIFO也有读写规则</p>
+<ul>
+<li><p>从FIFO中读取数据： 约定：如果一个进程为了从FIFO中读取数据而阻塞打开了FIFO，那么称该进程内的读操作为设置了阻塞标志的读操作</p>
+</li>
+<li><p>从FIFO中写入数据： 约定：如果一个进程为了向FIFO中写入数据而阻塞打开FIFO，那么称该进程内的写操作为设置了阻塞标志的写操作。</p>
 </li>
 </ul>
-<p>可以使用<code>std::is_pod&lt;classname&gt;::value</code>的值来判断一个类是否为POD类型。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="comment">//满足POD类型条件</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A1</span>&#123;</span></span><br><span class="line">    <span class="keyword">int</span> a;</span><br><span class="line">    <span class="keyword">double</span> b;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// A2继承了A1但父类子类同时有成员且A2的第一个成员为A1类型，故而不是pod类型</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A2</span>:</span><span class="keyword">public</span> A1&#123;</span><br><span class="line">    A1 num1;</span><br><span class="line">    <span class="keyword">double</span> num2;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    A1 a1;</span><br><span class="line">    A2 a2;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::is_pod&lt;A1&gt;::value &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::is_pod&lt;A2&gt;::value &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="5-2-mkfifo"><a href="#5-2-mkfifo" class="headerlink" title="5.2 mkfifo()"></a>5.2 mkfifo()</h3><p>可以使用<code>mkfifo</code>来创建一个<code>FIFO</code>管道，函数原型如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mkfifo</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">mode_t</span> mode)</span></span>;</span><br></pre></td></tr></table></figure>
 
-<p>那么知道了一个对象或变量是不是POD类型有什么用呢？答案是以此<strong>提高程序运行效率</strong>。</p>
-<p>假如事先知道了某函数的操作对象是POD类型，那么我们就可以针对其特性，使用底层的<code>memcpy()</code>、<code>memove()</code>等C函数对其操作，而不需要调用类似<code>constructor</code>，<code>destructor</code>等函数。这在大规模而操作频繁的程序中有显著的效率提升。</p>
-<h2 id="3-type-traits-模板"><a href="#3-type-traits-模板" class="headerlink" title="3 type_traits 模板"></a>3 type_traits 模板</h2><p><code>type_traits</code>在SGT STL 2.91版本中命名为<code>__type_traits</code>，因为当时并未加入STL标准，属于SGI的“私房菜”，故而命名前有两个下划线，这里为了方便描述就去掉了开头的下划线。</p>
-<p>从前文已经得知<code>traits</code>编程技巧的作用是为了<strong>取得对象或变量的某种特性</strong>，而目的则是为了根据<strong>特性作出相应优化而提升效率</strong>。而这里的<code>type_traits</code>模板所能取得特性就是是否具有所谓“平凡”（<code>trivial</code>）的默认构造函数、拷贝构造函数、赋值运算符、析构函数，以及是否是POD类型。如果具有上述的性质，那么在进行相应的构造、拷贝、赋值、析构的时候就可以使用<code>malloc()</code>、<code>memcpy()</code>这些C函数直接对内存进行操作，以获得更高的效率。</p>
-<p>那么如何表示其是否具有上述性质呢？用<code>true</code>和<code>false</code>这样的布尔值？当然可以，但这样的话，在使用的时候，就不方便根据不同特性来对实际函数进行重载了，因为都是<code>bool</code>类型嘛。</p>
-<p>根据SGI STL的方案，我们可以使用两个不含有任何成员的类来区分：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">true_type</span> &#123;</span> &#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">false_type</span> &#123;</span> &#125;;</span><br></pre></td></tr></table></figure>
-
-<p>不含有任何成员，就意味着开销最低。</p>
-<p>然后使用实现基本的<code>type_traits</code>模板：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> type&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _false_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _false_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _false_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>在这个模板里我们先将所有性质都设为<code>false_type</code>，也就是说给所有使用该模板的类型一个最保守的值，接着使用<strong>模板特化</strong>的方法，为已知为<code>true_type</code>的类型提供特化版本。例如：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 针对各种算术整型的特化版本</span></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;bool&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _true_type;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;char&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = _true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = _true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = _true_type;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>指针类型当然也具有上述性质，但是对于指针就没必要一个个特化了，只需要使用<strong>偏特化</strong>就可以覆盖各种类型的指针了：</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 针对指针的偏特化版本</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> type&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type_traits</span>&lt;type*&gt; &#123;</span></span><br><span class="line">    <span class="keyword">using</span> has_trivial_default_constructor   = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_copy_constructtor     = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_assignment_operator   = true_type;</span><br><span class="line">    <span class="keyword">using</span> has_trivial_destructor            = true_type;</span><br><span class="line">    <span class="keyword">using</span> is_POD_type                       = true_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h2 id="4-一点小扩展–is-const的实现"><a href="#4-一点小扩展–is-const的实现" class="headerlink" title="4 一点小扩展–is_const的实现"></a>4 一点小扩展–<code>is_const</code>的实现</h2><p>C++11的标准中加入了<code>decltype</code>关键字，使得许多原本需要使用<code>traits</code>技巧来取得对象类型的地方可以直接使用<code>decltype()</code>，避免了各种弯弯绕绕。比如在第一节迭代器的例子里。</p>
-<p>但<code>traits</code>技巧依然在许多地方很有用，事实上即使是最新的各版本STL实现，依然有着广泛使用。比如我们可以使用类似技巧来实现<code>is_const</code>，其作用是判断一个类型是否是<code>const</code>的。实现如下</p>
-<figure class="highlight c++"><figcaption><span>typetraits.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 一个辅助实现 true_type 和 false_type 的类</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, T v&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">intergral_constant</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> value_type = T;</span><br><span class="line">    <span class="keyword">using</span> type       = intergral_constant&lt;T, v&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> T value = v;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> true_type = intergral_constant&lt;<span class="keyword">bool</span>, <span class="literal">true</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> false_type = intergral_constant&lt;<span class="keyword">bool</span>, <span class="literal">false</span>&gt;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受普通类型时继承 false_type ,此时其静态成员 value 为 false</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">is_const</span>:</span> <span class="keyword">public</span> false_type &#123; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 偏特化使得接受 const 类型时继承 true_type，此时其静态成员 value 为 true</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">is_const</span>&lt;const T&gt;:</span> <span class="keyword">public</span> true_type &#123; &#125;;</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-附录"><a href="#5-附录" class="headerlink" title="5 附录"></a>5 附录</h2><p>本部分代码已上传到 github，<a href="https://github.com/Lammmmmmm/TinySTL" target="_blank" rel="noopener">代码链接在这里</a>。</p>
+<p>传入参数1代表管道名，参数2则是设定创建出来管道文件的权限，具体权限为<code>mode &amp; ~umask</code>。</p>
+<p>由于命名管道和匿名管道在底层实现上其实完全一致，区别只是命名管道具有一个全局可见的文件名供其他进程使用<code>open()</code>函数打开。</p>
+<h2 id="6-结束语"><a href="#6-结束语" class="headerlink" title="6 结束语"></a>6 结束语</h2><p>本篇文章主要介绍了管道这种进程间通信的方式，总结了<code>pipe</code>和<code>fifo</code>的读写规则。另外还介绍了能够实现文件重定向的<code>dup</code>函数、在程序中执行其他程序的<code>exec</code>函数，并相应地做了一些简单的练习。后续文章还需继续讲到其他进程间通信方式如<code>mmap</code>、<code>signal</code>以及<code>socket</code>。</p>
 
       
     </div>
@@ -611,27 +642,6 @@
     <li class="popular-posts-item">
       
       
-      <div class="popular-posts-title"><a href="\2020\01\02\STL2-AlloctorAndCtorDtor\" rel="bookmark">TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\01\07\STL3-SGI2StageAllocator\" rel="bookmark">TinySTL实现项目（三）：具有SGI特色的两级分配器alloc模板类</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
-      <div class="popular-posts-title"><a href="\2020\02\13\STL4-IteratorAndInitTool\" rel="bookmark">TinySTL实现项目（四）：迭代器、反向迭代器及初始化工具</a></div>
-      
-    </li>
-  
-    <li class="popular-posts-item">
-      
-      
       <div class="popular-posts-title"><a href="\2020\02\23\apue-hm02\" rel="bookmark">Linux 系统编程（二）：文件、文件操作函数和相关实例</a></div>
       
     </li>
@@ -640,6 +650,27 @@
       
       
       <div class="popular-posts-title"><a href="\2020\02\15\apue-hm01\" rel="bookmark">Linux 系统编程（一）：C/C++程序编译与gdb调试</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm03\" rel="bookmark">Linux系统编程（三）：stat函数和ls -l命令的实现</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\23\apue-hm04\" rel="bookmark">Linux系统编程（四）：utmp文件和who命令的实现</a></div>
+      
+    </li>
+  
+    <li class="popular-posts-item">
+      
+      
+      <div class="popular-posts-title"><a href="\2020\02\24\apue-hm05\" rel="bookmark">Linux系统编程（五）：多进程和fork()</a></div>
       
     </li>
   
@@ -712,7 +743,7 @@
   <!-- 本文标题 -->
   <li>
     <strong>本文标题： </strong>
-    TinySTL实现项目（一）：traits 技巧与 type_traits 模板
+    Linux系统编程（六）：使用管道在进程间通信
   </li>
 
   <!-- 本文作者 -->
@@ -724,26 +755,26 @@
   <!-- 创建时间 -->
   <li>
     <strong>创建时间： </strong>
-    2020年01月01日 - 20时01分
+    2020年02月24日 - 19时02分
   </li>
 
   <!-- 修改时间 -->
   <li>
     <strong>修改时间： </strong>
-    2020年01月03日 - 16时01分
+    2020年02月24日 - 19时02分
   </li>
 
   <!-- 引用链接 -->
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/" title="TinySTL实现项目（一）：traits 技巧与 type_traits 模板"
-      >http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/</a
+    <a href="http://yoursite.com/2020/02/24/apue-hm06/" title="Linux系统编程（六）：使用管道在进程间通信"
+      >http://yoursite.com/2020/02/24/apue-hm06/</a
     >
     <span class="copy-path" title="点击复制引用链接"
       ><i
         style="cursor: pointer"
         class="fa fa-clipboard"
-        data-clipboard-text="[Chou Bin's Blog | TinySTL实现项目（一）：traits 技巧与 type_traits 模板](http://yoursite.com/2020/01/01/STL1-TraitsAndType-traitsTemplate/)"
+        data-clipboard-text="[Chou Bin's Blog | Linux系统编程（六）：使用管道在进程间通信](http://yoursite.com/2020/02/24/apue-hm06/)"
         aria-label="复制成功"
       ></i
     ></span>
@@ -783,7 +814,7 @@
           
             <a href="/tags/C/" rel="tag"><i class="fa fa-tags"></i> C++</a>
           
-            <a href="/tags/STL/" rel="tag"><i class="fa fa-tags"></i> STL</a>
+            <a href="/tags/Linux/" rel="tag"><i class="fa fa-tags"></i> Linux</a>
           
         </div>
       
@@ -808,8 +839,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/01/02/STL2-AlloctorAndCtorDtor/" rel="prev" title="TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy">
-                <i class="fa fa-chevron-left"></i> TinySTL实现项目（二）：空间分配器allocator与全局construct、destroy
+              <a href="/2020/02/25/apue-hm07/" rel="prev" title="Linux系统编程（七）：使用mmap在进程间通信">
+                <i class="fa fa-chevron-left"></i> Linux系统编程（七）：使用mmap在进程间通信
               </a>
             
           </div>
@@ -818,8 +849,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2019/12/30/CustomBlogTheme/" rel="next" title="hexo 个人博客基于 NexT 主题的基本配置和定制优化">
-                hexo 个人博客基于 NexT 主题的基本配置和定制优化 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/02/24/apue-hm05/" rel="next" title="Linux系统编程（五）：多进程和fork()">
+                Linux系统编程（五）：多进程和fork() <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -1028,7 +1059,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-traits-编程技法"><span class="nav-text">1 traits 编程技法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-POD类型"><span class="nav-text">2 POD类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-type-traits-模板"><span class="nav-text">3 type_traits 模板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-一点小扩展–is-const的实现"><span class="nav-text">4 一点小扩展–is_const的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-附录"><span class="nav-text">5 附录</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-管道的介绍"><span class="nav-text">1 管道的介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-pipe"><span class="nav-text">2 pipe()</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-函数原型"><span class="nav-text">2.1 函数原型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-管道读写行为"><span class="nav-text">2.2 管道读写行为</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-使用小demo"><span class="nav-text">2.3 使用小demo</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-dup和exec函数族"><span class="nav-text">3 dup和exec函数族</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-dup-和dup2"><span class="nav-text">3.1 dup()和dup2()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-execl-和execlp"><span class="nav-text">3.2 execl()和execlp()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-实现文件重定向"><span class="nav-text">3.3 实现文件重定向</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-实现管道命令"><span class="nav-text">4 实现管道命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-实现思路"><span class="nav-text">4.1 实现思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-实现代码"><span class="nav-text">4.2 实现代码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-FIFO管道"><span class="nav-text">5 FIFO管道</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-FIFO介绍"><span class="nav-text">5.1 FIFO介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-mkfifo"><span class="nav-text">5.2 mkfifo()</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-结束语"><span class="nav-text">6 结束语</span></a></li></ol></div>
             
 
           </div>
